@@ -1,2 +1,2 @@
- Raspberry Pi Spotify
-=====================
+PiSpotify
+=========
