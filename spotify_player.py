@@ -123,13 +123,11 @@ class Spotify(object):
         self.session.on(spotify.SessionEvent.END_OF_TRACK, self.end_of_track)
 
     def login(self, username, password):
-        assert not self.logged_in_deferred
         self.session.login(username, password, remember_me=True)
         self.logged_in_deferred = Deferred()
         return self.logged_in_deferred
 
     def relogin(self):
-        assert not self.logged_in_deferred
         self.session.relogin()
         self.logged_in_deferred = Deferred()
         return self.logged_in_deferred
@@ -138,7 +136,6 @@ class Spotify(object):
         self.session.forget_me()
 
     def logout(self):
-        assert not self.logged_out_deferred
         self.session.logout()
         self.logged_out_deferred = Deferred()
         return self.logged_out_deferred
