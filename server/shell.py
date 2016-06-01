@@ -30,6 +30,10 @@ if __name__ == "__main__":
             cfg = ConfigParser()
             cfg.read("config.ini")
             self.s = Spotify(cfg.items("SPOTIFY"))
+            try:
+                self.s.relogin()
+            except:
+                self.logger("you are not logged in.")
 
         def do_login(self, line):
             username = line
