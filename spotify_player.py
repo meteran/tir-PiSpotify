@@ -26,7 +26,7 @@ class Spotify(object):
         for param, value in config:
             self.config.__setattr__(param, value)
         self.session = spotify.Session(config=self.config)
-        self.logged_in_deferred = False
+        self.logged_in = False
 
         self.set_volume(90)
         self.query_count = self.config.query_count
