@@ -16,6 +16,17 @@ def login_required(f):
     return _check_logged_in
 
 
+def serialize_output(serialize_func_name):
+    def decorator(f):
+        def _func(*args, **kwargs):
+            serialize_func = Spotify.__getattribute__(serialize_func_name)
+            d = f(*args, **kwargs)
+            d.addCallback(serialize_func)
+            return d
+        return _func
+    return decorator
+
+
 class Spotify(object):
     def __init__(self, config):
         self.config = spotify.Config()
@@ -106,8 +117,7 @@ class Spotify(object):
             self.logged_out_deferred = None
 
     def end_of_track(self, _):
-        # self.session.player.play(False)
-        pass
+        self.session.player.play(False)
 
     def set_signals(self):
         self.session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED, self.connection_state_changed)
@@ -142,6 +152,7 @@ class Spotify(object):
              } for track in tracks]
         return json.dumps(tracks, indent=2)
 
+    @serialize_output("playlists_to_json")
     @login_required
     def get_playlists(self):
         d = Deferred()
@@ -152,3 +163,19 @@ class Spotify(object):
             self.session.playlist_container.on(spotify.PlaylistContainerEvent.CONTAINER_LOADED, lambda x: d.callback(x))
             self.session.playlist_container.load()
         return d
+
+    @staticmethod
+    def playlists_to_json(playlists):
+        playlists = [
+            {"name": playlist.name,
+             "id": index
+            } for index, playlist in enumerate(playlists)
+        ]
+        return json.dumps(playlists, indent=2)
+
+    def get_playlist_tracks(self, index):
+        pass
+
+    @login_required
+    def play_playlist(self, index):
+        pass
