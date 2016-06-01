@@ -164,16 +164,16 @@ if __name__ == "__main__":
         def do_login(self, line):
             username = line
             password = getpass("password: ")
-            self.log_deferred(self.s.login(username, password))
+            self.s.login(username, password)
 
         def do_relogin(self, _):
-            self.log_deferred(self.s.relogin())
+            self.s.relogin()
 
         def do_logout(self, _):
-            self.log_deferred(self.s.logout())
+            self.s.logout()
 
         def do_search(self, query):
-            self.log_deferred(self.s.search(query))
+            self.s.search(query).addCallback(lambda x: self.logger.info(str(x)))
 
         def do_play(self, uri):
             self.s.play_uri(uri)
