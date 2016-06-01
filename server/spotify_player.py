@@ -4,6 +4,7 @@ import json
 import subprocess
 
 import spotify
+from twisted.internet import reactor
 from twisted.internet.defer import Deferred
 
 
@@ -97,15 +98,16 @@ class Spotify(object):
     def connection_state_changed(self, session):
         if session.connection.state is spotify.ConnectionState.LOGGED_IN and self.logged_in_deferred:
             self.logged_in = True
-            self.logged_in_deferred.callback(self.logged_in)
+            reactor.callFromThread(self.logged_in_deferred.callback, self.logged_in)
             self.logged_in_deferred = None
         elif session.connection.state is spotify.ConnectionState.LOGGED_OUT and self.logged_out_deferred:
             self.logged_in = False
-            self.logged_out_deferred.callback(self.logged_in)
+            reactor.callFromThread(self.logged_out_deferred.callback, self.logged_in)
             self.logged_out_deferred = None
 
     def end_of_track(self, _):
-        self.session.player.play(False)
+        # self.session.player.play(False)
+        pass
 
     def set_signals(self):
         self.session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED, self.connection_state_changed)
@@ -139,3 +141,11 @@ class Spotify(object):
              "uri": unicode(track.link.uri)
              } for track in tracks]
         return json.dumps(tracks, indent=2)
+
+    @login_required
+    def get_playlists(self):
+        d = Deferred()
+        self.session.playlist_container.off(spotify.PlaylistContainerEvent.CONTAINER_LOADED)
+        self.session.playlist_container.on(spotify.PlaylistContainerEvent.CONTAINER_LOADED, lambda x: d.callback(x))
+        self.session.playlist_container.load()
+        return d

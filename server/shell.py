@@ -54,6 +54,9 @@ if __name__ == "__main__":
         def do_pause(self, _):
             self.s.pause()
 
+        def do_resume(self, _):
+            self.s.resume()
+
         def do_mute(self, _):
             self.s.mute()
 
@@ -68,6 +71,9 @@ if __name__ == "__main__":
             reactor.stop()
             print('')
             return True
+
+        def do_playlist(self, _):
+            return self.s.get_playlists().addCallback(self.logger.info)
 
 
     reactor.callLater(0, Shell().cmdloop)
