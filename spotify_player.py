@@ -29,7 +29,7 @@ class Spotify(object):
         self.logged_in = False
 
         self.set_volume(90)
-        self.query_count = self.config.query_count
+        self.query_count = int(self.config.query_count)
         self.query = None
 
         self.set_signals()
@@ -164,8 +164,7 @@ if __name__ == "__main__":
         def do_login(self, line):
             username = line
             password = getpass("password: ")
-            self.s.login(username, password)
-            # self.log_deferred()
+            self.log_deferred(self.s.login(username, password))
 
         def do_relogin(self, _):
             self.log_deferred(self.s.relogin())
@@ -191,7 +190,7 @@ if __name__ == "__main__":
         def log_deferred(self, d):
             d.addCallback(lambda x: self.logger.info("logged in"))
 
-        def do_EOF(self, line):
+        def do_EOF(self, _):
             self.s.event_loop.stop()
             reactor.stop()
             print('')
