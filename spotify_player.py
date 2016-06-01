@@ -53,14 +53,14 @@ class Spotify(object):
         if type(percent) == int and 100 >= percent >= 0:
             self.volume = percent
         try:
-            subprocess.Popen("amixer cset numid=1 -- {0}%".format(self.volume))
+            subprocess.call("amixer cset numid=1 -- {0}%".format(self.volume), shell=True)
         except:
             pass
 
     @staticmethod
     def mute():
         try:
-            subprocess.Popen("amixer cset numid=1 -- 0%")
+            subprocess.call("amixer cset numid=1 -- 0%", shell=True)
         except:
             pass
 
