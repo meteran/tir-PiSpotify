@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # coding: utf-8
+import json
 import logging
 
 import subprocess
@@ -57,17 +58,20 @@ class Spotify(object):
         except:
             pass
 
+    def unmute(self):
+        self.set_volume()
+
     @staticmethod
     def mute():
         try:
-            subprocess.call("amixer cset numid=1 -- 0%", shell=True)
+            subprocess.call("amixer cset numid=1 -- 0%")
         except:
             pass
 
     @login_required
     def search(self, query=''):
         d = Deferred()
-        self.query = self.session.search(query, callback=lambda x: d.callback(x.tracks),
+        self.query = self.session.search(query, callback=lambda x: d.callback(self.tracks_to_json(x.tracks)),
                                          track_count=self.query_count, album_count=0, artist_count=0, playlist_count=0)
         return d
 
@@ -139,6 +143,16 @@ class Spotify(object):
         self.session.logout()
         self.logged_out_deferred = Deferred()
         return self.logged_out_deferred
+
+    @staticmethod
+    def tracks_to_json(tracks):
+        tracks = [
+            {"title": track.name,
+             "artists": track.artists,
+             "time": track.duration / 1000,
+             "album": track.album
+             } for track in tracks]
+        return json.dumps(indent=2)
 
 
 if __name__ == "__main__":
