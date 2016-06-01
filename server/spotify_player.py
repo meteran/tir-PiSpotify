@@ -145,7 +145,15 @@ class Spotify(object):
     @login_required
     def get_playlists(self):
         d = Deferred()
-        self.session.playlist_container.off(spotify.PlaylistContainerEvent.CONTAINER_LOADED)
-        self.session.playlist_container.on(spotify.PlaylistContainerEvent.CONTAINER_LOADED, lambda x: d.callback(x))
-        self.session.playlist_container.load()
+        if self.session.playlist_container.is_loaded:
+            print "loaded"
+            reactor.callLater(0, d.callback, self.session.playlist_container)
+        else:
+            print "not loaded"
+            self.session.playlist_container.off(spotify.PlaylistContainerEvent.CONTAINER_LOADED)
+            print "asd"
+            self.session.playlist_container.on(spotify.PlaylistContainerEvent.CONTAINER_LOADED, lambda x: d.callback(x))
+            print "afdsa"
+            self.session.playlist_container.load()
+        print "fsadfsd"
         return d
