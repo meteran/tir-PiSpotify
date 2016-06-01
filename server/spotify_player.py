@@ -1,17 +1,10 @@
 #!/usr/bin/python
 # coding: utf-8
 import json
-import logging
-
 import subprocess
-from ConfigParser import ConfigParser
-from cmd import Cmd
-from getpass import getpass
-
-from twisted.internet import reactor
-from twisted.internet.defer import Deferred
 
 import spotify
+from twisted.internet.defer import Deferred
 
 
 def login_required(f):

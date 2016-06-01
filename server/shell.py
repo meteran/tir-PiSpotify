@@ -7,7 +7,7 @@ from getpass import getpass
 
 from twisted.internet import reactor
 
-from server.spotify_player import Spotify
+from spotify_player import Spotify
 
 logging.basicConfig(level=logging.INFO)
 
