@@ -88,17 +88,19 @@ class Spotify(object):
             pass
 
     @login_required
+    @serialize_output(tracks_to_json)
     def search(self, query=''):
         d = Deferred()
-        self.query = self.session.search(query, callback=lambda x: d.callback(tracks_to_json(x.tracks)),
+        self.query = self.session.search(query, callback=lambda x: d.callback(x.tracks),
                                          track_count=self.query_count, album_count=0, artist_count=0, playlist_count=0)
         return d
 
     @login_required
+    @serialize_output(tracks_to_json)
     def more(self):
         assert self.query
         d = Deferred()
-        self.query.more(callback=lambda x: d.callback(tracks_to_json(x.tracks)))
+        self.query.more(callback=lambda x: d.callback(x.tracks))
         return d
 
     @login_required
