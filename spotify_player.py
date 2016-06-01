@@ -79,7 +79,7 @@ class Spotify(object):
     def more(self):
         assert self.query
         d = Deferred()
-        self.query.more(callback=lambda x: d.callback(x.tracks))
+        self.query.more(callback=lambda x: d.callback(self.tracks_to_json(x.tracks)))
         return d
 
     @login_required
