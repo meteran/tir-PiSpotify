@@ -146,7 +146,7 @@ class Spotify(object):
     def get_playlists(self):
         d = Deferred()
         if self.session.playlist_container.is_loaded:
-            reactor.callLater(0, d.callback, self.session.playlist_container)
+            d.callback(self.session.playlist_container)
         else:
             self.session.playlist_container.off(spotify.PlaylistContainerEvent.CONTAINER_LOADED)
             self.session.playlist_container.on(spotify.PlaylistContainerEvent.CONTAINER_LOADED, lambda x: d.callback(x))

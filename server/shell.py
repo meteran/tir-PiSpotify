@@ -67,9 +67,6 @@ if __name__ == "__main__":
         def do_volume(self, percent):
             self.s.set_volume(int(percent))
 
-        def log_deferred(self, d):
-            d.addCallback(lambda x: self.logger.info("logged in"))
-
         def do_EOF(self, _):
             self.s.event_loop.stop()
             reactor.stop()
