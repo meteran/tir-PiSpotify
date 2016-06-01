@@ -7,7 +7,7 @@ from twisted.internet.protocol import DatagramProtocol
 from twisted.web.resource import Resource
 from twisted.web.server import Site
 
-from spotify import Spotify
+from spotify_player import Spotify
 
 DEBUG = False
 

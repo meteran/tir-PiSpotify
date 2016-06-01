@@ -10,7 +10,7 @@ from getpass import getpass
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred
 
-import spotify
+import spotify_player
 
 
 def login_required(f):
@@ -23,10 +23,10 @@ def login_required(f):
 
 class Spotify(object):
     def __init__(self, config):
-        self.config = spotify.Config()
+        self.config = spotify_player.Config()
         for param, value in config:
             self.config.__setattr__(param, value)
-        self.session = spotify.Session(config=self.config)
+        self.session = spotify_player.Session(config=self.config)
         self.logged_in_deferred = False
 
         self.set_volume(90)
@@ -39,7 +39,7 @@ class Spotify(object):
         self.logged_out_deferred = None
 
         try:
-            self.audio_driver = spotify.AlsaSink(self.session)
+            self.audio_driver = spotify_player.AlsaSink(self.session)
         except ImportError:
             self.logger.warning(
                 'No audio sink found; audio playback unavailable.')
@@ -78,7 +78,7 @@ class Spotify(object):
         try:
             track = self.session.get_track(track)
             track.load()
-        except (ValueError, spotify.Error) as e:
+        except (ValueError, spotify_player.Error) as e:
             return
         self.session.player.load(track)
         self.session.player.play()
@@ -95,17 +95,17 @@ class Spotify(object):
 
     @login_required
     def seek(self, seconds):
-        if self.session.player.state is spotify.PlayerState.UNLOADED:
+        if self.session.player.state is spotify_player.PlayerState.UNLOADED:
             self.logger.warning('A track must be loaded before seeking')
             return
         self.session.player.seek(int(seconds) * 1000)
 
     def connection_state_changed(self, session):
-        if session.connection.state is spotify.ConnectionState.LOGGED_IN and self.logged_in_deferred:
+        if session.connection.state is spotify_player.ConnectionState.LOGGED_IN and self.logged_in_deferred:
             self.logged_in = True
             self.logged_in_deferred.callback(self.logged_in)
             self.logged_in_deferred = None
-        elif session.connection.state is spotify.ConnectionState.LOGGED_OUT and self.logged_out_deferred:
+        elif session.connection.state is spotify_player.ConnectionState.LOGGED_OUT and self.logged_out_deferred:
             self.logged_in = False
             self.logged_out_deferred.callback(self.logged_in)
             self.logged_out_deferred = None
@@ -114,8 +114,8 @@ class Spotify(object):
         self.session.player.play(False)
 
     def set_signals(self):
-        self.session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED, self.connection_state_changed)
-        self.session.on(spotify.SessionEvent.END_OF_TRACK, self.end_of_track)
+        self.session.on(spotify_player.SessionEvent.CONNECTION_STATE_UPDATED, self.connection_state_changed)
+        self.session.on(spotify_player.SessionEvent.END_OF_TRACK, self.end_of_track)
 
     def login(self, username, password):
         assert not self.logged_in_deferred
