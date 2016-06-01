@@ -73,7 +73,7 @@ if __name__ == "__main__":
             return True
 
         def do_playlist(self, _):
-            return self.s.get_playlists().addCallback(self.logger.info)
+            self.s.get_playlists().addCallback(self.logger.info)
 
 
     reactor.callLater(0, Shell().cmdloop)
