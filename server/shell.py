@@ -79,6 +79,9 @@ if __name__ == "__main__":
         def do_print(self, index):
             self.logger.info(self.s.get_playlist_tracks(int(index)))
 
+        def do_play_playlist(self, index):
+            self.s.play_playlist(index)
+
 
     reactor.callLater(0, Shell().cmdloop)
     reactor.run()

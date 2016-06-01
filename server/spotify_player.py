@@ -2,10 +2,14 @@
 # coding: utf-8
 import json
 import subprocess
+from random import Random
 
 import spotify
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred
+
+r = Random()
+random = r.choice
 
 
 def login_required(f):
@@ -64,6 +68,8 @@ class Spotify(object):
         self.logged_in_deferred = None
         self.logged_out_deferred = None
 
+        self.track_generator = None
+
         self.audio_driver = spotify.AlsaSink(self.session)
 
         self.event_loop = spotify.EventLoop(self.session)
@@ -105,13 +111,13 @@ class Spotify(object):
 
     @login_required
     def play_uri(self, track):
+        self.track_generator = None
         try:
             track = self.session.get_track(track)
             track.load()
+            self.play(track)
         except (ValueError, spotify.Error) as e:
             return
-        self.session.player.load(track)
-        self.session.player.play()
 
     def pause(self):
         self.session.player.play(False)
@@ -140,6 +146,11 @@ class Spotify(object):
 
     def end_of_track(self, _):
         self.session.player.play(False)
+        if self.track_generator:
+            try:
+                self.play(next(self.track_generator))
+            except StopIteration:
+                self.track_generator = None
 
     def set_signals(self):
         self.session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED, self.connection_state_changed)
@@ -180,6 +191,21 @@ class Spotify(object):
         assert self.session.playlist_container.is_loaded
         return tracks_to_json(self.session.playlist_container[index].tracks)
 
+    def play(self, track):
+        self.session.player.load(track)
+        self.session.player.play()
+
+    @staticmethod
+    def generator(playlist, randomize):
+        if randomize:
+            while True:
+                yield random(playlist)
+        else:
+            for track in playlist:
+                yield track
+
     @login_required
-    def play_playlist(self, index):
+    def play_playlist(self, index, randomize=False):
         assert self.session.playlist_container.is_loaded
+        self.track_generator = self.generator(self.session.playlist_container[index], randomize)
+
