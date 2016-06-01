@@ -147,10 +147,10 @@ class Spotify(object):
     @staticmethod
     def tracks_to_json(tracks):
         tracks = [
-            {"title": track.name,
-             "artists": [artist.name for artist in track.artists],
+            {"title": unicode(track.name),
+             "artists": [unicode(artist.name) for artist in track.artists],
              "time": track.duration / 1000,
-             "album": track.album.name
+             "album": unicode(track.album.name)
              } for track in tracks]
         return json.dumps(tracks, indent=2)
 
@@ -187,7 +187,10 @@ if __name__ == "__main__":
             self.s.logout()
 
         def do_search(self, query):
-            self.s.search(query).addCallback(lambda x: self.logger.info(str(x)))
+            self.s.search(query).addCallback(lambda x: self.logger.info(unicode(x)))
+
+        def do_more(self, _):
+            self.s.more().addCallback(lambda x: self.logger.info(unicode(x)))
 
         def do_play(self, uri):
             self.s.play_uri(uri)
