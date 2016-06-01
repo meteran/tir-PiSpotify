@@ -16,15 +16,35 @@ def login_required(f):
     return _check_logged_in
 
 
-def serialize_output(serialize_func_name):
+def serialize_output(serialize_func):
     def decorator(f):
         def _func(*args, **kwargs):
-            serialize_func = Spotify.__getattribute__(serialize_func_name)
             d = f(*args, **kwargs)
             d.addCallback(serialize_func)
             return d
+
         return _func
+
     return decorator
+
+
+def playlists_to_json(playlists):
+    playlists = [
+        {"name": playlist.name,
+         "id": index
+         } for index, playlist in enumerate(playlists)]
+    return json.dumps(playlists, indent=2)
+
+
+def tracks_to_json(tracks):
+    tracks = [
+        {"title": unicode(track.name),
+         "artists": [unicode(artist.name) for artist in track.artists],
+         "time": track.duration / 1000,
+         "album": unicode(track.album.name),
+         "uri": unicode(track.link.uri)
+         } for track in tracks]
+    return json.dumps(tracks, indent=2)
 
 
 class Spotify(object):
@@ -70,7 +90,7 @@ class Spotify(object):
     @login_required
     def search(self, query=''):
         d = Deferred()
-        self.query = self.session.search(query, callback=lambda x: d.callback(self.tracks_to_json(x.tracks)),
+        self.query = self.session.search(query, callback=lambda x: d.callback(tracks_to_json(x.tracks)),
                                          track_count=self.query_count, album_count=0, artist_count=0, playlist_count=0)
         return d
 
@@ -78,7 +98,7 @@ class Spotify(object):
     def more(self):
         assert self.query
         d = Deferred()
-        self.query.more(callback=lambda x: d.callback(self.tracks_to_json(x.tracks)))
+        self.query.more(callback=lambda x: d.callback(tracks_to_json(x.tracks)))
         return d
 
     @login_required
@@ -141,19 +161,8 @@ class Spotify(object):
         self.logged_out_deferred = Deferred()
         return self.logged_out_deferred
 
-    @staticmethod
-    def tracks_to_json(tracks):
-        tracks = [
-            {"title": unicode(track.name),
-             "artists": [unicode(artist.name) for artist in track.artists],
-             "time": track.duration / 1000,
-             "album": unicode(track.album.name),
-             "uri": unicode(track.link.uri)
-             } for track in tracks]
-        return json.dumps(tracks, indent=2)
-
-    @serialize_output("playlists_to_json")
     @login_required
+    @serialize_output(playlists_to_json)
     def get_playlists(self):
         d = Deferred()
         if self.session.playlist_container.is_loaded:
@@ -163,15 +172,6 @@ class Spotify(object):
             self.session.playlist_container.on(spotify.PlaylistContainerEvent.CONTAINER_LOADED, lambda x: d.callback(x))
             self.session.playlist_container.load()
         return d
-
-    @staticmethod
-    def playlists_to_json(playlists):
-        playlists = [
-            {"name": playlist.name,
-             "id": index
-            } for index, playlist in enumerate(playlists)
-        ]
-        return json.dumps(playlists, indent=2)
 
     def get_playlist_tracks(self, index):
         pass
