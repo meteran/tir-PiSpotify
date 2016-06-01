@@ -82,6 +82,12 @@ if __name__ == "__main__":
         def do_play_playlist(self, index):
             self.s.play_playlist(int(index))
 
+        def do_play_playlist_random(self, index):
+            self.s.play_playlist(int(index), True)
+
+        def do_next(self, _):
+            self.s.end_of_track()
+
 
     reactor.callLater(0, Shell().cmdloop)
     reactor.run()

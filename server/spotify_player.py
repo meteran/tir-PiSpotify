@@ -144,7 +144,10 @@ class Spotify(object):
             reactor.callFromThread(self.logged_out_deferred.callback, self.logged_in)
             self.logged_out_deferred = None
 
-    def end_of_track(self, _):
+    def next_track(self):
+        self.end_of_track()
+
+    def end_of_track(self, *_):
         self.session.player.play(False)
         if self.track_generator:
             try:
@@ -208,5 +211,5 @@ class Spotify(object):
     def play_playlist(self, index, randomize=False):
         assert self.session.playlist_container.is_loaded
         self.track_generator = self.generator(self.session.playlist_container[index].tracks, randomize)
-        self.end_of_track(None)
+        self.end_of_track()
 
