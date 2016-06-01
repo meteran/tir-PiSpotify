@@ -207,6 +207,6 @@ class Spotify(object):
     @login_required
     def play_playlist(self, index, randomize=False):
         assert self.session.playlist_container.is_loaded
-        self.track_generator = self.generator(self.session.playlist_container[index], randomize)
+        self.track_generator = self.generator(self.session.playlist_container[index].tracks, randomize)
         self.end_of_track(None)
 
