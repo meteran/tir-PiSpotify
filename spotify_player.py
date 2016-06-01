@@ -30,7 +30,7 @@ class Spotify(object):
 
         self.set_volume(90)
         self.query_count = self.config.query_count
-        self.search = None
+        self.query = None
 
         self.set_signals()
 
@@ -61,15 +61,15 @@ class Spotify(object):
     @login_required
     def search(self, query=''):
         d = Deferred()
-        self.search = self.session.search(query, callback=lambda x: d.callback(x.tracks),
-                                          track_count=self.query_count, album_count=0, artist_count=0, playlist_count=0)
+        self.query = self.session.search(query, callback=lambda x: d.callback(x.tracks),
+                                         track_count=self.query_count, album_count=0, artist_count=0, playlist_count=0)
         return d
 
     @login_required
     def more(self):
-        assert self.search
+        assert self.query
         d = Deferred()
-        self.search.more(callback=lambda x: d.callback(x.tracks))
+        self.query.more(callback=lambda x: d.callback(x.tracks))
         return d
 
     @login_required
@@ -170,7 +170,7 @@ if __name__ == "__main__":
             self.log_deferred(self.s.logout())
 
         def do_search(self, query):
-            self.log_deferred(self.s.search(query))
+            self.log_deferred(self.s.query(query))
 
         def do_play(self, uri):
             self.s.play_uri(uri)
