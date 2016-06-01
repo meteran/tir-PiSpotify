@@ -79,5 +79,4 @@ site = Site(root)
 
 if __name__ == "__main__":
     DEBUG = False
-    debug()
     discover = Discover(cfg)
