@@ -76,6 +76,9 @@ if __name__ == "__main__":
         def do_playlist(self, _):
             self.s.get_playlists().addCallback(self.logger.info)
 
+        def do_print(self, index):
+            self.logger.info(self.s.get_playlist_tracks(int(index)))
+
 
     reactor.callLater(0, Shell().cmdloop)
     reactor.run()

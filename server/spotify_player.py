@@ -175,9 +175,11 @@ class Spotify(object):
             self.session.playlist_container.load()
         return d
 
+    @login_required
     def get_playlist_tracks(self, index):
-        pass
+        assert self.session.playlist_container.is_loaded
+        return tracks_to_json(self.session.playlist_container[index].tracks)
 
     @login_required
     def play_playlist(self, index):
-        pass
+        assert self.session.playlist_container.is_loaded
