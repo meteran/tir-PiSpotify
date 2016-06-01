@@ -170,7 +170,7 @@ if __name__ == "__main__":
             self.log_deferred(self.s.logout())
 
         def do_search(self, query):
-            self.log_deferred(self.s.query(query))
+            self.log_deferred(self.s.search(query))
 
         def do_play(self, uri):
             self.s.play_uri(uri)
