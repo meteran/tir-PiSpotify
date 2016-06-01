@@ -43,6 +43,9 @@ class Spotify(object):
             self.logger.warning(
                 'No audio sink found; audio playback unavailable.')
 
+        self.event_loop = spotify.EventLoop(self.session)
+        self.event_loop.start()
+
     def set_volume(self, percent=None):
         if type(percent) == int and 100 >= percent >= 0:
             self.volume = percent
@@ -189,7 +192,7 @@ if __name__ == "__main__":
             d.addCallback(lambda x: self.logger.info("logged in"))
 
         def do_EOF(self, line):
-            self.event_loop.stop()
+            self.s.event_loop.stop()
             reactor.stop()
             print('')
             return True
