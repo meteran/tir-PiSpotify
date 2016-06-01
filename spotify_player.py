@@ -161,7 +161,8 @@ if __name__ == "__main__":
         def do_login(self, line):
             username = line
             password = getpass("password: ")
-            self.log_deferred(self.s.login(username, password))
+            self.s.login(username, password)
+            # self.log_deferred()
 
         def do_relogin(self, _):
             self.log_deferred(self.s.relogin())
@@ -187,6 +188,11 @@ if __name__ == "__main__":
         def log_deferred(self, d):
             d.addCallback(lambda x: self.logger.info("logged in"))
 
+        def do_EOF(self, line):
+            self.event_loop.stop()
+            reactor.stop()
+            print('')
+            return True
 
     reactor.callLater(0, Shell().cmdloop)
     reactor.run()
