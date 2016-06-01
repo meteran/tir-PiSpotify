@@ -148,9 +148,9 @@ class Spotify(object):
     def tracks_to_json(tracks):
         tracks = [
             {"title": track.name,
-             "artists": track.artists,
+             "artists": [artist.name for artist in track.artists],
              "time": track.duration / 1000,
-             "album": track.album
+             "album": track.album.name
              } for track in tracks]
         return json.dumps(tracks, indent=2)
 
