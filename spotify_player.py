@@ -15,7 +15,7 @@ import spotify
 def login_required(f):
     def _check_logged_in(self, *args, **kwargs):
         assert self.logged_in
-        f(self, *args, **kwargs)
+        return f(self, *args, **kwargs)
 
     return _check_logged_in
 
