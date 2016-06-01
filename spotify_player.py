@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 import logging
+
 import subprocess
 from ConfigParser import ConfigParser
 from cmd import Cmd
@@ -10,6 +11,8 @@ from twisted.internet import reactor
 from twisted.internet.defer import Deferred
 
 import spotify
+
+logging.basicConfig(level=logging.INFO)
 
 
 def login_required(f):
@@ -142,8 +145,6 @@ class Spotify(object):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-
     class Shell(Cmd):
         prompt = 'spotify> '
         doc_header = 'Commands'
@@ -197,6 +198,7 @@ if __name__ == "__main__":
             reactor.stop()
             print('')
             return True
+
 
     reactor.callLater(0, Shell().cmdloop)
     reactor.run()
