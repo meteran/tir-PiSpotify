@@ -150,7 +150,8 @@ class Spotify(object):
             {"title": unicode(track.name),
              "artists": [unicode(artist.name) for artist in track.artists],
              "time": track.duration / 1000,
-             "album": unicode(track.album.name)
+             "album": unicode(track.album.name),
+             "uri": unicode(track.link.uri)
              } for track in tracks]
         return json.dumps(tracks, indent=2)
 
