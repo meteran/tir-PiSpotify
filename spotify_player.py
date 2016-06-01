@@ -161,7 +161,7 @@ if __name__ == "__main__":
         def do_login(self, line):
             username = line
             password = getpass("password: ")
-            self.log_deferred(self.s.logged_in(username, password))
+            self.log_deferred(self.s.login(username, password))
 
         def do_relogin(self, _):
             self.log_deferred(self.s.relogin())
