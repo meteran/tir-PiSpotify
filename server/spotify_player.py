@@ -147,6 +147,7 @@ class Spotify(object):
         d = Deferred()
         if self.session.playlist_container.is_loaded:
             print "loaded"
+            print self.session.playlist_container
             reactor.callLater(0, d.callback, self.session.playlist_container)
         else:
             print "not loaded"
