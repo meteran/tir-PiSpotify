@@ -141,10 +141,19 @@ class Spotify(object):
 if __name__ == "__main__":
     class Shell(Cmd):
         prompt = 'spotify> '
-
+        doc_header = 'Commands'
         logger = logging.getLogger('shell.commander')
 
+        def precmd(self, line):
+            if line:
+                self.logger.debug('New command: %s', line)
+            return line
+
+        def emptyline(self):
+            pass
+
         def __init__(self):
+            Cmd.__init__(self)
             cfg = ConfigParser()
             cfg.read("config.ini")
             self.s = Spotify(cfg.items("SPOTIFY"))
