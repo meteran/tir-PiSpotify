@@ -160,6 +160,7 @@ if __name__ == "__main__":
             cfg = ConfigParser()
             cfg.read("config.ini")
             self.s = Spotify(cfg.items("SPOTIFY"))
+            self.logger.setLevel(logging.INFO)
 
         def do_login(self, line):
             username = line
