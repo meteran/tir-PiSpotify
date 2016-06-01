@@ -80,7 +80,7 @@ if __name__ == "__main__":
             self.logger.info(self.s.get_playlist_tracks(int(index)))
 
         def do_play_playlist(self, index):
-            self.s.play_playlist(index)
+            self.s.play_playlist(int(index))
 
 
     reactor.callLater(0, Shell().cmdloop)
