@@ -152,7 +152,7 @@ class Spotify(object):
              "time": track.duration / 1000,
              "album": track.album
              } for track in tracks]
-        return json.dumps(indent=2)
+        return json.dumps(tracks, indent=2)
 
 
 if __name__ == "__main__":
