@@ -26,10 +26,7 @@ public class PiSpotifySource implements MusicProviderSource {
     private static final String JSON_ALBUM = "album";
     private static final String JSON_ARTIST = "artist";
     private static final String JSON_SOURCE = "source";
-    private static final String JSON_GENRE = "genre";
     private static final String JSON_IMAGE = "image";
-    private static final String JSON_TRACK_NUMBER = "trackNumber";
-    private static final String JSON_TOTAL_TRACK_COUNT = "totalTrackCount";
     private static final String JSON_PLAYLIST = "playlist";
     private static final String JSON_DURATION = "duration";
 
@@ -60,14 +57,10 @@ public class PiSpotifySource implements MusicProviderSource {
         String title = json.getString(JSON_TITLE);
         String album = json.getString(JSON_ALBUM);
         String artist = json.getString(JSON_ARTIST);
-        String genre = json.getString(JSON_GENRE);
         String playlist = json.getString(JSON_PLAYLIST);
         String source = json.getString(JSON_SOURCE);
         String iconUrl = json.getString(JSON_IMAGE);
-        int trackNumber = json.getInt(JSON_TRACK_NUMBER);
-        int totalTrackCount = json.getInt(JSON_TOTAL_TRACK_COUNT);
-        int duration = json.getInt(JSON_DURATION) * 1000; // ms
-
+        int duration = json.getInt(JSON_DURATION) * 1000; //ms
         LogHelper.d(TAG, "Found music track: ", json);
         if (!source.startsWith("http")) {
             source = basePath + source;
@@ -91,12 +84,9 @@ public class PiSpotifySource implements MusicProviderSource {
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
-                .putString(MediaMetadataCompat.METADATA_KEY_GENRE, genre)
                 .putString(MediaMetadataCompat.METADATA_KEY_COMPILATION, playlist)
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, iconUrl)
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, trackNumber)
-                .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, totalTrackCount)
                 .build();
     }
 

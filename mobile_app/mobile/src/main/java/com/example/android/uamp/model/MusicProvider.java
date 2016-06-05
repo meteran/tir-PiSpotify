@@ -81,7 +81,7 @@ public class MusicProvider {
     /**
      * Get an iterator over the list of playlists
      *
-     * @return genres
+     * @return playlists
      */
     public Iterable<String> getPlaylists() {
         if (mCurrentState != State.INITIALIZED) {
@@ -206,7 +206,7 @@ public class MusicProvider {
 
     /**
      * Get the list of music tracks from a server and caches the track information
-     * for future reference, keying tracks by musicId and grouping by genre.
+     * for future reference, keying tracks by musicId and grouping by playlist.
      */
     public void retrieveMediaAsync(final Callback callback) {
         LogHelper.d(TAG, "retrieveMediaAsync called");
@@ -285,13 +285,13 @@ public class MusicProvider {
             mediaItems.add(createBrowsableMediaItemForRoot(resources));
 
         } else if (MEDIA_ID_MUSICS_BY_PLAYLIST.equals(mediaId)) {
-            for (String genre : getPlaylists()) {
-                mediaItems.add(createBrowsableMediaItemForGenre(genre, resources));
+            for (String playlist : getPlaylists()) {
+                mediaItems.add(createBrowsableMediaItemForPlaylist(playlist, resources));
             }
 
         } else if (mediaId.startsWith(MEDIA_ID_MUSICS_BY_PLAYLIST)) {
-            String genre = MediaIDHelper.getHierarchy(mediaId)[1];
-            for (MediaMetadataCompat metadata : getMusicsByPlaylist(genre)) {
+            String playlist = MediaIDHelper.getHierarchy(mediaId)[1];
+            for (MediaMetadataCompat metadata : getMusicsByPlaylist(playlist)) {
                 mediaItems.add(createMediaItem(metadata));
             }
 
@@ -313,13 +313,13 @@ public class MusicProvider {
                 MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
     }
 
-    private MediaBrowserCompat.MediaItem createBrowsableMediaItemForGenre(String genre,
-                                                                          Resources resources) {
+    private MediaBrowserCompat.MediaItem createBrowsableMediaItemForPlaylist(String playlist,
+                                                                             Resources resources) {
         MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
-                .setMediaId(createMediaID(null, MEDIA_ID_MUSICS_BY_PLAYLIST, genre))
-                .setTitle(genre)
+                .setMediaId(createMediaID(null, MEDIA_ID_MUSICS_BY_PLAYLIST, playlist))
+                .setTitle(playlist)
                 .setSubtitle(resources.getString(
-                        R.string.browse_musics_by_playlist_subtitle, genre))
+                        R.string.browse_musics_by_playlist_subtitle, playlist))
                 .build();
         return new MediaBrowserCompat.MediaItem(description,
                 MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
