@@ -1,9 +1,7 @@
 package com.example.android.uamp.playback;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.wifi.WifiManager;
@@ -13,9 +11,8 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.TextUtils;
 
-import com.example.android.uamp.MusicService;
+import com.example.android.uamp.R;
 import com.example.android.uamp.model.MusicProvider;
-import com.example.android.uamp.model.MusicProviderSource;
 import com.example.android.uamp.utils.LogHelper;
 import com.example.android.uamp.utils.MediaIDHelper;
 
@@ -45,7 +42,6 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
     private boolean mPlayOnFocusGain;
     private Callback mCallback;
     private final MusicProvider mMusicProvider;
-    private volatile boolean mAudioNoisyReceiverRegistered;
     private volatile int mCurrentPosition;
     private volatile String mCurrentMediaId;
 
@@ -54,23 +50,6 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
     private final AudioManager mAudioManager;
     private MediaPlayer mMediaPlayer;
 
-    private final IntentFilter mAudioNoisyIntentFilter =
-            new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
-
-    private final BroadcastReceiver mAudioNoisyReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
-                LogHelper.d(TAG, "Headphones disconnected.");
-                if (isPlaying()) {
-                    Intent i = new Intent(context, MusicService.class);
-                    i.setAction(MusicService.ACTION_CMD);
-                    i.putExtra(MusicService.CMD_NAME, MusicService.CMD_PAUSE);
-                    mContext.startService(i);
-                }
-            }
-        }
-    };
 
     public SpotifyPlayback(Context context, MusicProvider musicProvider) {
         this.mContext = context;
@@ -95,7 +74,6 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
         mCurrentPosition = getCurrentStreamPosition();
         // Give up Audio focus
         giveUpAudioFocus();
-        unregisterAudioNoisyReceiver();
         // Relax all resources
         relaxResources(true);
     }
@@ -137,7 +115,6 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
     public void play(MediaSessionCompat.QueueItem item) { //todo
         mPlayOnFocusGain = true;
         tryToGetAudioFocus();
-        registerAudioNoisyReceiver();
         String mediaId = item.getDescription().getMediaId();
         boolean mediaHasChanged = !TextUtils.equals(mediaId, mCurrentMediaId);
         if (mediaHasChanged) {
@@ -150,19 +127,17 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
         } else {
             mState = PlaybackStateCompat.STATE_STOPPED;
             relaxResources(false); // release everything except MediaPlayer
-            MediaMetadataCompat track = mMusicProvider.getMusic(
-                    MediaIDHelper.extractMusicIDFromMediaID(item.getDescription().getMediaId()));
+            MediaMetadataCompat track = mMusicProvider.getMusic(MediaIDHelper.extractMusicIDFromMediaID(item.getDescription().getMediaId()));
 
-            //noinspection ResourceType
-            String source = track.getString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE);
-
+            AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(R.raw.silence);
             try {
                 createMediaPlayerIfNeeded();
 
                 mState = PlaybackStateCompat.STATE_BUFFERING;
 
                 mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                mMediaPlayer.setDataSource(source);
+
+                mMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
 
                 // Starts preparing the media player in the background. When
                 // it's done, it will call our OnPreparedListener (that is,
@@ -175,7 +150,7 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
                 // Wifi lock, which prevents the Wifi radio from going to
                 // sleep while the song is playing.
                 mWifiLock.acquire();
-
+                //todo rest
                 if (mCallback != null) {
                     mCallback.onPlaybackStatusChanged(mState);
                 }
@@ -205,7 +180,6 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
         if (mCallback != null) {
             mCallback.onPlaybackStatusChanged(mState);
         }
-        unregisterAudioNoisyReceiver();
     }
 
     @Override
@@ -462,17 +436,4 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
         }
     }
 
-    private void registerAudioNoisyReceiver() {
-        if (!mAudioNoisyReceiverRegistered) {
-            mContext.registerReceiver(mAudioNoisyReceiver, mAudioNoisyIntentFilter);
-            mAudioNoisyReceiverRegistered = true;
-        }
-    }
-
-    private void unregisterAudioNoisyReceiver() {
-        if (mAudioNoisyReceiverRegistered) {
-            mContext.unregisterReceiver(mAudioNoisyReceiver);
-            mAudioNoisyReceiverRegistered = false;
-        }
-    }
 }

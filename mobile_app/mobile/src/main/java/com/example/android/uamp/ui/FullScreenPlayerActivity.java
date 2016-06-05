@@ -190,9 +190,15 @@ public class FullScreenPlayerActivity extends ActionBarCastActivity {
         });
 
         mSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mStart.setText(DateUtils.formatElapsedTime(progress / 1000));
+/*                if(progress == mDuration) {
+                    PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder(mLastPlaybackState);
+                    Log.i(TAG, "lol");
+                    updatePlaybackState(builder.setState(PlaybackStateCompat.STATE_STOPPED, mDuration, 0).build());
+                }*/
             }
 
             @Override
@@ -339,7 +345,7 @@ public class FullScreenPlayerActivity extends ActionBarCastActivity {
             return;
         }
         LogHelper.d(TAG, "updateDuration called ");
-        int duration = (int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
+        final int duration = (int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
         mSeekbar.setMax(duration);
         mEnd.setText(DateUtils.formatElapsedTime(duration / 1000));
     }
