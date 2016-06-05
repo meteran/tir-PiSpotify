@@ -311,16 +311,6 @@ public class MediaNotificationManager extends BroadcastReceiver {
                 .setContentText(description.getSubtitle())
                 .setLargeIcon(art);
 
-        if (mController != null && mController.getExtras() != null) {
-            String castName = mController.getExtras().getString(MusicService.EXTRA_CONNECTED_CAST);
-            if (castName != null) {
-                String castInfo = mService.getResources()
-                        .getString(R.string.casting_to_device, castName);
-                notificationBuilder.setSubText(castInfo);
-                notificationBuilder.addAction(R.drawable.ic_close_black_24dp,
-                        mService.getString(R.string.stop_casting), mStopCastIntent);
-            }
-        }
 
         setNotificationPlaybackState(notificationBuilder);
         if (fetchArtUrl != null) {

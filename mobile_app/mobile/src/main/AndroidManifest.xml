@@ -32,7 +32,7 @@
         android:required="false" />
 
     <application
-        android:name=".UAMPApplication"
+        android:name=".PiSpotifyApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
@@ -134,9 +134,6 @@
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
-
-        <!-- Service that keeps track of reconnecting to Cast when wifi is enabled. -->
-        <service android:name="com.google.android.libraries.cast.companionlibrary.cast.reconnection.ReconnectionService" />
 
         <!-- A full screen activity showing controls and a seek bar for
              the current playing music -->

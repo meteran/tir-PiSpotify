@@ -32,21 +32,15 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.support.v7.media.MediaRouter;
 
 import com.example.android.uamp.model.MusicProvider;
-import com.example.android.uamp.playback.CastPlayback;
 import com.example.android.uamp.playback.LocalPlayback;
-import com.example.android.uamp.playback.Playback;
 import com.example.android.uamp.playback.PlaybackManager;
 import com.example.android.uamp.playback.QueueManager;
 import com.example.android.uamp.ui.NowPlayingActivity;
 import com.example.android.uamp.utils.CarHelper;
 import com.example.android.uamp.utils.LogHelper;
 import com.example.android.uamp.utils.WearHelper;
-import com.google.android.gms.cast.ApplicationMetadata;
-import com.google.android.libraries.cast.companionlibrary.cast.VideoCastManager;
-import com.google.android.libraries.cast.companionlibrary.cast.callbacks.VideoCastConsumerImpl;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -137,51 +131,10 @@ public class MusicService extends MediaBrowserServiceCompat implements
     private MediaNotificationManager mMediaNotificationManager;
     private Bundle mSessionExtras;
     private final DelayedStopHandler mDelayedStopHandler = new DelayedStopHandler(this);
-    private MediaRouter mMediaRouter;
     private PackageValidator mPackageValidator;
 
     private boolean mIsConnectedToCar;
     private BroadcastReceiver mCarConnectionReceiver;
-
-    /**
-     * Consumer responsible for switching the Playback instances depending on whether
-     * it is connected to a remote player.
-     */
-    private final VideoCastConsumerImpl mCastConsumer = new VideoCastConsumerImpl() {
-
-        @Override
-        public void onApplicationConnected(ApplicationMetadata appMetadata, String sessionId,
-                                           boolean wasLaunched) {
-            // In case we are casting, send the device name as an extra on MediaSession metadata.
-            mSessionExtras.putString(EXTRA_CONNECTED_CAST,
-                    VideoCastManager.getInstance().getDeviceName());
-            mSession.setExtras(mSessionExtras);
-            // Now we can switch to CastPlayback
-            Playback playback = new CastPlayback(mMusicProvider);
-            mMediaRouter.setMediaSessionCompat(mSession);
-            mPlaybackManager.switchToPlayback(playback, true);
-        }
-
-        @Override
-        public void onDisconnectionReason(int reason) {
-            LogHelper.d(TAG, "onDisconnectionReason");
-            // This is our final chance to update the underlying stream position
-            // In onDisconnected(), the underlying CastPlayback#mVideoCastConsumer
-            // is disconnected and hence we update our local value of stream position
-            // to the latest position.
-            mPlaybackManager.getPlayback().updateLastKnownStreamPosition();
-        }
-
-        @Override
-        public void onDisconnected() {
-            LogHelper.d(TAG, "onDisconnected");
-            mSessionExtras.remove(EXTRA_CONNECTED_CAST);
-            mSession.setExtras(mSessionExtras);
-            Playback playback = new LocalPlayback(MusicService.this, mMusicProvider);
-            mMediaRouter.setMediaSessionCompat(null);
-            mPlaybackManager.switchToPlayback(playback, false);
-        }
-    };
 
     /*
      * (non-Javadoc)
@@ -257,8 +210,6 @@ public class MusicService extends MediaBrowserServiceCompat implements
         } catch (RemoteException e) {
             throw new IllegalStateException("Could not create a MediaNotificationManager", e);
         }
-        VideoCastManager.getInstance().addVideoCastConsumer(mCastConsumer);
-        mMediaRouter = MediaRouter.getInstance(getApplicationContext());
 
         registerCarConnectionReceiver();
     }
@@ -276,8 +227,6 @@ public class MusicService extends MediaBrowserServiceCompat implements
             if (ACTION_CMD.equals(action)) {
                 if (CMD_PAUSE.equals(command)) {
                     mPlaybackManager.handlePauseRequest();
-                } else if (CMD_STOP_CASTING.equals(command)) {
-                    VideoCastManager.getInstance().disconnect();
                 }
             } else {
                 // Try to handle the intent as a media button event wrapped by MediaButtonReceiver
@@ -303,7 +252,6 @@ public class MusicService extends MediaBrowserServiceCompat implements
         // Service is being killed, so make sure we release our resources
         mPlaybackManager.handleStopRequest(null);
         mMediaNotificationManager.stopNotification();
-        VideoCastManager.getInstance().removeVideoCastConsumer(mCastConsumer);
         mDelayedStopHandler.removeCallbacksAndMessages(null);
         mSession.release();
     }
