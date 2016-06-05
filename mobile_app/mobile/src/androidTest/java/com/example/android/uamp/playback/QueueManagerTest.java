@@ -115,14 +115,14 @@ public class QueueManagerTest {
     public void testIsSameBrowsingCategory() throws Exception {
         QueueManager queueManager = createQueueManagerWithValidation(null, -1, null);
 
-        Iterator<String> genres = provider.getGenres().iterator();
+        Iterator<String> genres = provider.getPlaylists().iterator();
         String genre1 = genres.next();
         String genre2 = genres.next();
         List<MediaSessionCompat.QueueItem> queueGenre1 = QueueHelper.getPlayingQueue(
-                MediaIDHelper.createMediaID(null, MediaIDHelper.MEDIA_ID_MUSICS_BY_GENRE, genre1),
+                MediaIDHelper.createMediaID(null, MediaIDHelper.MEDIA_ID_MUSICS_BY_PLAYLIST, genre1),
                 provider);
         List<MediaSessionCompat.QueueItem> queueGenre2 = QueueHelper.getPlayingQueue(
-                MediaIDHelper.createMediaID(null, MediaIDHelper.MEDIA_ID_MUSICS_BY_GENRE, genre2),
+                MediaIDHelper.createMediaID(null, MediaIDHelper.MEDIA_ID_MUSICS_BY_PLAYLIST, genre2),
                 provider);
 
         // set the current queue
@@ -249,10 +249,10 @@ public class QueueManagerTest {
         QueueManager queueManager = createQueueManagerWithValidation(null, -1, null);
         // get the first music of the first genre and build a hierarchy-aware version of its
         // mediaId
-        String genre = provider.getGenres().iterator().next();
-        MediaMetadataCompat metadata = provider.getMusicsByGenre(genre).iterator().next();
+        String genre = provider.getPlaylists().iterator().next();
+        MediaMetadataCompat metadata = provider.getMusicsByPlaylist(genre).iterator().next();
         String hierarchyAwareMediaID = MediaIDHelper.createMediaID(
-                metadata.getDescription().getMediaId(), MediaIDHelper.MEDIA_ID_MUSICS_BY_GENRE,
+                metadata.getDescription().getMediaId(), MediaIDHelper.MEDIA_ID_MUSICS_BY_PLAYLIST,
                 genre);
 
         // set a queue from the hierarchyAwareMediaID. It should contain all music with the same
@@ -261,7 +261,7 @@ public class QueueManagerTest {
 
         // count all songs with the same genre
         int count = 0;
-        for (MediaMetadataCompat m : provider.getMusicsByGenre(genre)) {
+        for (MediaMetadataCompat m : provider.getMusicsByPlaylist(genre)) {
             count++;
         }
 

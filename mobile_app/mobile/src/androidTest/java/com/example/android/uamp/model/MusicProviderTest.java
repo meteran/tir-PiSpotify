@@ -67,7 +67,7 @@ public class MusicProviderTest {
 
     @Test
     public void testGetGenres() throws Exception {
-        Iterable<String> genres = provider.getGenres();
+        Iterable<String> genres = provider.getPlaylists();
         ArrayList<String> list = new ArrayList<>();
         for (String genre : genres) {
             list.add(genre);
@@ -81,7 +81,7 @@ public class MusicProviderTest {
     @Test
     public void testGetMusicsByGenre() throws Exception {
         int count = 0;
-        for (MediaMetadataCompat metadata : provider.getMusicsByGenre("Genre 1")) {
+        for (MediaMetadataCompat metadata : provider.getMusicsByPlaylist("Genre 1")) {
             String genre = metadata.getString(MediaMetadataCompat.METADATA_KEY_GENRE);
             assertEquals("Genre 1", genre);
             count++;
@@ -92,7 +92,7 @@ public class MusicProviderTest {
 
     @Test
     public void testGetMusicsByInvalidGenre() throws Exception {
-        assertFalse(provider.getMusicsByGenre("XYZ").iterator().hasNext());
+        assertFalse(provider.getMusicsByPlaylist("XYZ").iterator().hasNext());
     }
 
     @Test
@@ -203,7 +203,7 @@ public class MusicProviderTest {
 
         // test level 2 (list of genres)
         int genreCount = 0;
-        for (String ignored : provider.getGenres()) {
+        for (String ignored : provider.getPlaylists()) {
             genreCount++;
         }
         List<MediaBrowserCompat.MediaItem> level2 = provider.getChildren(

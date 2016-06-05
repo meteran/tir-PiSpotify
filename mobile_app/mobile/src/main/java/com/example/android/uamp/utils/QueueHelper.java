@@ -26,7 +26,7 @@ import com.example.android.uamp.model.MusicProvider;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.example.android.uamp.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_GENRE;
+import static com.example.android.uamp.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_PLAYLIST;
 import static com.example.android.uamp.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_SEARCH;
 
 /**
@@ -55,8 +55,8 @@ public class QueueHelper {
 
         Iterable<MediaMetadataCompat> tracks = null;
         // This sample only supports genre and by_search category types.
-        if (categoryType.equals(MEDIA_ID_MUSICS_BY_GENRE)) {
-            tracks = musicProvider.getMusicsByGenre(categoryValue);
+        if (categoryType.equals(MEDIA_ID_MUSICS_BY_PLAYLIST)) {
+            tracks = musicProvider.getMusicsByPlaylist(categoryValue);
         } else if (categoryType.equals(MEDIA_ID_MUSICS_BY_SEARCH)) {
             tracks = musicProvider.searchMusicBySongTitle(categoryValue);
         }
@@ -89,7 +89,7 @@ public class QueueHelper {
         if (params.isAlbumFocus) {
             result = musicProvider.searchMusicByAlbum(params.album);
         } else if (params.isGenreFocus) {
-            result = musicProvider.getMusicsByGenre(params.genre);
+            result = musicProvider.getMusicsByPlaylist(params.genre);
         } else if (params.isArtistFocus) {
             result = musicProvider.searchMusicByArtist(params.artist);
         } else if (params.isSongFocus) {
