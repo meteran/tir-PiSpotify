@@ -35,7 +35,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.uamp.AlbumArtCache;
-import com.example.android.uamp.MusicService;
 import com.example.android.uamp.R;
 import com.example.android.uamp.utils.LogHelper;
 
@@ -45,11 +44,34 @@ import com.example.android.uamp.utils.LogHelper;
 public class PlaybackControlsFragment extends Fragment {
 
     private static final String TAG = LogHelper.makeLogTag(PlaybackControlsFragment.class);
-
+    private final View.OnClickListener mButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            MediaControllerCompat controller = ((FragmentActivity) getActivity())
+                    .getSupportMediaController();
+            PlaybackStateCompat stateObj = controller.getPlaybackState();
+            final int state = stateObj == null ?
+                    PlaybackStateCompat.STATE_NONE : stateObj.getState();
+            LogHelper.d(TAG, "Button pressed, in state " + state);
+            switch (v.getId()) {
+                case R.id.play_pause:
+                    LogHelper.d(TAG, "Play button pressed, in state " + state);
+                    if (state == PlaybackStateCompat.STATE_PAUSED ||
+                            state == PlaybackStateCompat.STATE_STOPPED ||
+                            state == PlaybackStateCompat.STATE_NONE) {
+                        playMedia();
+                    } else if (state == PlaybackStateCompat.STATE_PLAYING ||
+                            state == PlaybackStateCompat.STATE_BUFFERING ||
+                            state == PlaybackStateCompat.STATE_CONNECTING) {
+                        pauseMedia();
+                    }
+                    break;
+            }
+        }
+    };
     private ImageButton mPlayPause;
     private TextView mTitle;
     private TextView mSubtitle;
-    private TextView mExtraInfo;
     private ImageView mAlbumArt;
     private String mArtUrl;
     // Receive callbacks from the MediaController. Here we update our state such as which queue
@@ -84,7 +106,6 @@ public class PlaybackControlsFragment extends Fragment {
 
         mTitle = (TextView) rootView.findViewById(R.id.title);
         mSubtitle = (TextView) rootView.findViewById(R.id.artist);
-        mExtraInfo = (TextView) rootView.findViewById(R.id.extra_info);
         mAlbumArt = (ImageView) rootView.findViewById(R.id.album_art);
         rootView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -181,15 +202,6 @@ public class PlaybackControlsFragment extends Fragment {
         }
     }
 
-    public void setExtraInfo(String extraInfo) {
-        if (extraInfo == null) {
-            mExtraInfo.setVisibility(View.GONE);
-        } else {
-            mExtraInfo.setText(extraInfo);
-            mExtraInfo.setVisibility(View.VISIBLE);
-        }
-    }
-
     private void onPlaybackStateChanged(PlaybackStateCompat state) {
         LogHelper.d(TAG, "onPlaybackStateChanged ", state);
         if (getActivity() == null) {
@@ -220,43 +232,7 @@ public class PlaybackControlsFragment extends Fragment {
                     ContextCompat.getDrawable(getActivity(), R.drawable.ic_pause_black_36dp));
         }
 
-        MediaControllerCompat controller = ((FragmentActivity) getActivity())
-                .getSupportMediaController();
-        String extraInfo = null;
-        if (controller != null && controller.getExtras() != null) {
-            String castName = controller.getExtras().getString(MusicService.EXTRA_CONNECTED_CAST);
-            if (castName != null) {
-                extraInfo = getResources().getString(R.string.casting_to_device, castName);
-            }
-        }
-        setExtraInfo(extraInfo);
     }
-
-    private final View.OnClickListener mButtonListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            MediaControllerCompat controller = ((FragmentActivity) getActivity())
-                    .getSupportMediaController();
-            PlaybackStateCompat stateObj = controller.getPlaybackState();
-            final int state = stateObj == null ?
-                    PlaybackStateCompat.STATE_NONE : stateObj.getState();
-            LogHelper.d(TAG, "Button pressed, in state " + state);
-            switch (v.getId()) {
-                case R.id.play_pause:
-                    LogHelper.d(TAG, "Play button pressed, in state " + state);
-                    if (state == PlaybackStateCompat.STATE_PAUSED ||
-                            state == PlaybackStateCompat.STATE_STOPPED ||
-                            state == PlaybackStateCompat.STATE_NONE) {
-                        playMedia();
-                    } else if (state == PlaybackStateCompat.STATE_PLAYING ||
-                            state == PlaybackStateCompat.STATE_BUFFERING ||
-                            state == PlaybackStateCompat.STATE_CONNECTING) {
-                        pauseMedia();
-                    }
-                    break;
-            }
-        }
-    };
 
     private void playMedia() {
         MediaControllerCompat controller = ((FragmentActivity) getActivity())

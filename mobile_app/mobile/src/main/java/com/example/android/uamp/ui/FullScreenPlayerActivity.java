@@ -1,24 +1,10 @@
-/*
- * Copyright (C) 2014 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.example.android.uamp.ui;
 
 import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
@@ -32,6 +18,7 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -47,6 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
@@ -59,7 +47,29 @@ public class FullScreenPlayerActivity extends ActionBarCastActivity {
     private static final String TAG = LogHelper.makeLogTag(FullScreenPlayerActivity.class);
     private static final long PROGRESS_UPDATE_INTERNAL = 1000;
     private static final long PROGRESS_UPDATE_INITIAL_INTERVAL = 100;
-
+    private final AtomicBoolean changing = new AtomicBoolean(false);
+    private final Handler mHandler = new Handler();
+    private final View.OnClickListener onSkipNext = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            MediaControllerCompat.TransportControls controls =
+                    getSupportMediaController().getTransportControls();
+            controls.skipToNext();
+            AsyncTask.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        Log.e(TAG, "sleeping", e);
+                    }
+                    changing.set(false);
+                }
+            });
+        }
+    };
+    private final ScheduledExecutorService mExecutorService =
+            Executors.newSingleThreadScheduledExecutor();
     private ImageView mSkipPrev;
     private ImageView mSkipNext;
     private ImageView mPlayPause;
@@ -74,24 +84,17 @@ public class FullScreenPlayerActivity extends ActionBarCastActivity {
     private Drawable mPauseDrawable;
     private Drawable mPlayDrawable;
     private ImageView mBackgroundImage;
-
+    private int mDuration = 0;
     private String mCurrentArtUrl;
-    private final Handler mHandler = new Handler();
     private MediaBrowserCompat mMediaBrowser;
-
+    private ScheduledFuture<?> mScheduleFuture;
+    private PlaybackStateCompat mLastPlaybackState;
     private final Runnable mUpdateProgressTask = new Runnable() {
         @Override
         public void run() {
             updateProgress();
         }
     };
-
-    private final ScheduledExecutorService mExecutorService =
-            Executors.newSingleThreadScheduledExecutor();
-
-    private ScheduledFuture<?> mScheduleFuture;
-    private PlaybackStateCompat mLastPlaybackState;
-
     private final MediaControllerCompat.Callback mCallback = new MediaControllerCompat.Callback() {
         @Override
         public void onPlaybackStateChanged(@NonNull PlaybackStateCompat state) {
@@ -146,14 +149,7 @@ public class FullScreenPlayerActivity extends ActionBarCastActivity {
         mLoading = (ProgressBar) findViewById(R.id.progressBar1);
         mControllers = findViewById(R.id.controllers);
 
-        mSkipNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                MediaControllerCompat.TransportControls controls =
-                        getSupportMediaController().getTransportControls();
-                controls.skipToNext();
-            }
-        });
+        mSkipNext.setOnClickListener(onSkipNext);
 
         mSkipPrev.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -194,11 +190,11 @@ public class FullScreenPlayerActivity extends ActionBarCastActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mStart.setText(DateUtils.formatElapsedTime(progress / 1000));
-/*                if(progress == mDuration) {
-                    PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder(mLastPlaybackState);
-                    Log.i(TAG, "lol");
-                    updatePlaybackState(builder.setState(PlaybackStateCompat.STATE_STOPPED, mDuration, 0).build());
-                }*/
+                if (progress == mDuration && !changing.get()) {
+                    Log.i(TAG, "skipped by seekbar");
+                    changing.set(true);
+                    onSkipNext.onClick(mSkipNext);
+                }
             }
 
             @Override
@@ -346,6 +342,7 @@ public class FullScreenPlayerActivity extends ActionBarCastActivity {
         }
         LogHelper.d(TAG, "updateDuration called ");
         final int duration = (int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
+        mDuration = duration;
         mSeekbar.setMax(duration);
         mEnd.setText(DateUtils.formatElapsedTime(duration / 1000));
     }
@@ -355,13 +352,6 @@ public class FullScreenPlayerActivity extends ActionBarCastActivity {
             return;
         }
         mLastPlaybackState = state;
-        if (getSupportMediaController() != null && getSupportMediaController().getExtras() != null) {
-            String castName = getSupportMediaController()
-                    .getExtras().getString(MusicService.EXTRA_CONNECTED_CAST);
-            String line3Text = castName == null ? "" : getResources()
-                    .getString(R.string.casting_to_device, castName);
-            mLine3.setText(line3Text);
-        }
 
         switch (state.getState()) {
             case PlaybackStateCompat.STATE_PLAYING:
