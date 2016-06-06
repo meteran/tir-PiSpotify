@@ -1,0 +1,23 @@
+{"music" : [
+  { "title" : "R U Mine",
+    "album" : "AM",
+    "artist" : "Arctic Monkeys",
+    "image" : "album_art.jpg",
+    "duration" : 201,
+    "playlist" : "lol"
+  },
+  { "title" : "Do I Wanna Know",
+    "album" : "AM",
+    "artist" : "Arctic Monkeys",
+    "image" : "album_art.jpg",
+    "duration" : 272,
+    "playlist" : "lol"
+  },
+  { "title" : "Do I Wanna Know2",
+    "album" : "AM",
+    "artist" : "Arctic Monkeys",
+    "image" : "album_art.jpg",
+    "duration" : 272,
+    "playlist" : "lol"
+  }
+]}

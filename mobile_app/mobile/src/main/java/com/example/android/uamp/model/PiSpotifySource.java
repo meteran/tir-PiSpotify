@@ -25,7 +25,6 @@ public class PiSpotifySource implements MusicProviderSource {
     private static final String JSON_TITLE = "title";
     private static final String JSON_ALBUM = "album";
     private static final String JSON_ARTIST = "artist";
-    private static final String JSON_SOURCE = "source";
     private static final String JSON_IMAGE = "image";
     private static final String JSON_PLAYLIST = "playlist";
     private static final String JSON_DURATION = "duration";
@@ -58,13 +57,10 @@ public class PiSpotifySource implements MusicProviderSource {
         String album = json.getString(JSON_ALBUM);
         String artist = json.getString(JSON_ARTIST);
         String playlist = json.getString(JSON_PLAYLIST);
-        String source = json.getString(JSON_SOURCE);
         String iconUrl = json.getString(JSON_IMAGE);
         int duration = json.getInt(JSON_DURATION) * 1000; //ms
         LogHelper.d(TAG, "Found music track: ", json);
-        if (!source.startsWith("http")) {
-            source = basePath + source;
-        }
+
 
         if (!iconUrl.startsWith("http")) {
             iconUrl = basePath + iconUrl;
@@ -80,7 +76,6 @@ public class PiSpotifySource implements MusicProviderSource {
         // sample for convenience only.
         return new MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, id)
-                .putString(MusicProviderSource.CUSTOM_METADATA_TRACK_SOURCE, source)
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)

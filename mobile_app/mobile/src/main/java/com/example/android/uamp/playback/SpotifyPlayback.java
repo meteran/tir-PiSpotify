@@ -10,6 +10,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.example.android.uamp.R;
 import com.example.android.uamp.model.MusicProvider;
@@ -67,6 +68,7 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
 
     @Override
     public void stop(boolean notifyListeners) {
+        Log.i(TAG, "stop");
         mState = PlaybackStateCompat.STATE_STOPPED;
         if (notifyListeners && mCallback != null) {
             mCallback.onPlaybackStatusChanged(mState);
@@ -113,6 +115,7 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
 
     @Override
     public void play(MediaSessionCompat.QueueItem item) { //todo
+        Log.i(TAG, "play "+item.getDescription().getTitle());
         mPlayOnFocusGain = true;
         tryToGetAudioFocus();
         String mediaId = item.getDescription().getMediaId();
@@ -166,6 +169,7 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
 
     @Override
     public void pause() { //todo
+        Log.i(TAG, "pause");
         if (mState == PlaybackStateCompat.STATE_PLAYING) {
             // Pause media player and cancel the 'foreground service' state.
             if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
