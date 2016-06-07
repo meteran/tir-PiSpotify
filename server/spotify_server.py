@@ -140,6 +140,26 @@ class Player(APIResource):
         self.spotify.get_playlists().addCallback(callback)
         return NOT_DONE_YET
 
+    @GET('^/volume')
+    @json_resource
+    def get_current_volume(self, request):
+        return self._get_volume()
+
+    @POST('^/volume')
+    @json_resource
+    def set_current_volume(self, request):
+        if 'mute' in request.args:
+            mute = int(request.args['mute'][0])
+            if mute:
+                self.spotify.mute()
+                return {'muted':True}
+            else:
+                self.spotify.unmute()
+                return {'unmuted':True}
+        elif 'volume' in request.args:
+            self.spotify.set_volume(int(request.args['volume'][0]))
+            return self._get_volume()
+
     @GET('^/play')
     @POST('^/play')
     @json_resource
