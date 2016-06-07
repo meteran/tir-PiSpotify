@@ -19,7 +19,7 @@ import java.util.Iterator;
 public class PiSpotifySource implements MusicProviderSource {
     private static final String TAG = LogHelper.makeLogTag(PiSpotifySource.class);
 
-    protected static final String CATALOG_URL = "http://192.168.0.17/music.json"; //todo
+    private final String catalogUrl;
 
     private static final String JSON_MUSIC = "music";
     private static final String JSON_TITLE = "title";
@@ -29,12 +29,16 @@ public class PiSpotifySource implements MusicProviderSource {
     private static final String JSON_PLAYLIST = "playlist";
     private static final String JSON_DURATION = "duration";
 
+    public PiSpotifySource(String catalogUrl) {
+        this.catalogUrl = catalogUrl;
+    }
+
     @Override
     public Iterator<MediaMetadataCompat> iterator() {
         try {
-            int slashPos = CATALOG_URL.lastIndexOf('/');
-            String path = CATALOG_URL.substring(0, slashPos + 1);
-            JSONObject jsonObj = fetchJSONFromUrl(CATALOG_URL);
+            int slashPos = catalogUrl.lastIndexOf('/');
+            String path = catalogUrl.substring(0, slashPos + 1);
+            JSONObject jsonObj = fetchJSONFromUrl(catalogUrl);
             ArrayList<MediaMetadataCompat> tracks = new ArrayList<>();
             if (jsonObj != null) {
                 JSONArray jsonTracks = jsonObj.getJSONArray(JSON_MUSIC);

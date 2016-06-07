@@ -67,8 +67,8 @@ public class MusicProvider {
         void onMusicCatalogReady(boolean success);
     }
 
-    public MusicProvider() {
-        this(new PiSpotifySource());
+    public MusicProvider(String catalogUrl) {
+        this(new PiSpotifySource(catalogUrl));
     }
 
     public MusicProvider(MusicProviderSource source) {

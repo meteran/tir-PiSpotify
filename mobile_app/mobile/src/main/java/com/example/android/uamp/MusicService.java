@@ -40,6 +40,7 @@ import com.example.android.uamp.playback.SpotifyPlayback;
 import com.example.android.uamp.ui.NowPlayingActivity;
 import com.example.android.uamp.utils.CarHelper;
 import com.example.android.uamp.utils.LogHelper;
+import com.example.android.uamp.utils.ServiceDiscoveryHelper;
 import com.example.android.uamp.utils.WearHelper;
 
 import java.lang.ref.WeakReference;
@@ -130,6 +131,7 @@ public class MusicService extends MediaBrowserServiceCompat implements
 
     private boolean mIsConnectedToCar;
     private BroadcastReceiver mCarConnectionReceiver;
+    private ServiceDiscoveryHelper mDiscoveryHelper;
 
     /*
      * (non-Javadoc)
@@ -139,8 +141,8 @@ public class MusicService extends MediaBrowserServiceCompat implements
     public void onCreate() {
         super.onCreate();
         LogHelper.d(TAG, "onCreate");
-
-        mMusicProvider = new MusicProvider();
+        mDiscoveryHelper = new ServiceDiscoveryHelper(this);
+        mMusicProvider = new MusicProvider("http://192.168.0.17/music.json"); //todo
 
         // To make the app more responsive, fetch and cache catalog information now.
         // This can help improve the response time in the method
