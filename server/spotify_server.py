@@ -11,9 +11,9 @@ from txrestapi.methods import GET,POST
 from zeroconf import ServiceInfo, Zeroconf
 
 from spotify_player import Spotify
+from converters import json_resource, write_json, serialize_playlists, serialize_tracks, serialize_track
 
 import logging
-import json
 import socket
 
 DEBUG = False
@@ -23,6 +23,7 @@ def debug(*args):
     if DEBUG:
         for arg in args:
             print arg,
+
 
 class Discover(DatagramProtocol):
     def __init__(self, config, server_address="0.0.0.0"):
@@ -74,14 +75,93 @@ class Player(APIResource):
         APIResource.__init__(self)
         self.spotify = spotify
 
-    @GET('^/login')
-    def get_login(self, request):
-        "Check if and, which user is logged in"
-        request.setHeader("Content-Type", "application/json")
-        response = {'logged_in': self.spotify.logged_in}
+    def _get_state(self, response=None):
+        if response is None:
+            response = {}
+        response['state'] = self.spotify.session.player.state
+        return response
+
+    def _get_volume(self, response=None):
+        if response is None:
+            response = {}
+        response['volume'] = self.spotify.volume
+        return response
+
+    def _get_login(self, response=None):
+        if response is None:
+            response = {}
+        response['logged_in']= self.spotify.logged_in
         if self.spotify.logged_in:
             response['username'] = self.spotify.session.remembered_user_name
-        return json.dumps(response)
+        return response
+
+    @GET('^/playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)/play')
+    @json_resource
+    def play_track(self, request, pl_id, track_id):
+        try:
+            playlist = self.spotify.get_playlist(int(pl_id))
+            track = playlist.tracks[int(track_id)]
+            self.spotify.play(track)
+            return {
+                'now_playing': serialize_track(track, playlist_name=playlist.name)
+            }
+        except IndexError:
+            request.setResponseCode(404)
+
+    @GET('^/playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)')
+    @json_resource
+    def show_track(self, request, pl_id, track_id):
+        request.setHeader("Content-Type", "application/json")
+        try:
+            playlist = self.spotify.get_playlist(int(pl_id))
+            track = playlist.tracks[int(track_id)]
+            return serialize_track(track, playlist_name=playlist.name)
+        except IndexError:
+            request.setResponseCode(404)
+
+    @GET('^/playlists/(?P<index>[^/]+)')
+    @GET('^/playlists/(?P<index>[^/]+)/tracks')
+    @json_resource
+    def get_playlist(self, request, index):
+        "Get nth playlist"
+        try:
+            playlist = self.spotify.get_playlist(int(index))
+            return serialize_tracks(playlist.tracks, playlist_name=playlist.name)
+        except IndexError:
+            request.setResponseCode(404)
+            return {'error': 'no playlist with this index', 'index': index}
+
+    @GET('^/playlists')
+    def get_all_playlists(self, request):
+        "List all playlists"
+        def callback(playlists):
+            write_json(request, serialize_playlists(playlists))
+            request.finish()
+        self.spotify.get_playlists().addCallback(callback)
+        return NOT_DONE_YET
+
+    @GET('^/play')
+    @POST('^/play')
+    @json_resource
+    def play(self, request):
+        if 'uri' in request.args:
+            self.spotify.play_uri(request.args['uri'][0])
+        else:
+            self.spotify.resume()
+        return self._get_state()
+
+    @GET('^/pause')
+    @POST('^/pause')
+    @json_resource
+    def pause(self, request):
+        self.spotify.pause()
+        return self._get_state()
+
+    @GET('^/login')
+    @json_resource
+    def get_login(self, request):
+        "Check if and, which user is logged in"
+        return self._get_login()
 
     @POST('^/login')
     def login_as(self, request):
@@ -89,8 +169,7 @@ class Player(APIResource):
         username = request.args['username'][0]
         password = request.args['password'][0]
         def delayedResponse(logged_in):
-            response = self.get_login(request)
-            request.write(response)
+            request.write(self.get_login(request)) #also sets headers
             request.finish()
         # Deferred work like shit now.
         self.spotify.login(username,password).addCallback(delayedResponse)
@@ -100,69 +179,19 @@ class Player(APIResource):
     @POST('^/logout')
     def logout(self, request):
         def delayed(logged_in):
-            request.setHeader("Content-Type", "application/json")
-            request.write(json.dumps({'logged_in':logged_in}))
+            write_json(request,{'logged_out':not logged_in})
             request.finish()
         self.spotify.logout().addCallback(delayed)
         return NOT_DONE_YET
 
-    @GET('^/playlists$')
-    def get_all_playlists(self, request):
-        "List all playlists"
-        def callback(playlist_json):
-            request.setHeader("Content-Type", "application/json")
-            request.write(playlist_json)
-            request.finish()
-        self.spotify.get_playlists().addCallback(callback)
-        return NOT_DONE_YET
-
-    @GET('^/playlists/(?P<index>[^/]+)')
-    @GET('^/playlists/(?P<index>[^/]+)/tracks')
-    def get_playlist(self, request, index):
-        "Get nth playlist"
-        index = int(index)
-        request.setHeader("Content-Type", "application/json")
-        try:
-            return self.spotify.get_playlist_tracks(index)
-        except IndexError:
-            request.setResponseCode(404)
-            return json.dumps({'error':'no playlist with this index', 'index':index})
-
-    def get_state(self, response=None):
-        if response is None:
-            response = {}
-        response['state'] = self.spotify.session.player.state
-        return response
-
-    def get_volume(self, response=None):
-        if response is None:
-            response = {}
-        response['volume']=self.spotify.volume
-        return response
-
     @GET('^/status')
-    def get_playback_status(self, request):
-        request.setHeader("Content-Type", "application/json")
-        response = self.get_state()
-        response = self.get_volume(response)
-        return json.dumps(response)
-
-    @GET('^/play')
-    @POST('^/play')
-    def play(self, request):
-        request.setHeader("Content-Type", "application/json")
-        if 'uri' in request.args:
-            self.spotify.play_uri(request.args['uri'][0])
-        else:
-            self.spotify.resume()
-        return json.dumps(self.get_state())
-
-    @GET('^/pause')
-    @POST('^/pause')
-    def pause(self, request):
-        request.setHeader("Content-Type", "application/json")
-        self.spotify.pause()
-        return json.dumps(self.get_state())
+    @GET('^/')
+    @json_resource
+    def get_status(self, request):
+        response = self._get_state()
+        response = self._get_volume(response)
+        response = self._get_login(response)
+        return response
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

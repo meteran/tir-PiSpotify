@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # coding: utf-8
-import json
 import subprocess
 from random import Random
 
@@ -30,32 +29,6 @@ def serialize_output(serialize_func):
         return _func
 
     return decorator
-
-
-def playlists_to_json(playlists):
-    playlists = [
-        {"name": playlist.name,
-         "id": index,
-         } for index, playlist in enumerate(playlists)]
-    return json.dumps(playlists, indent=2)
-
-
-def tracks_to_json(tracks, playlist_name=""):
-    for track in tracks:
-        with open("/tmp/static/"+str(track.link.uri), 'w') as f:
-            f.write(track.album.cover().load().data)
-    tracks = [
-        {
-            "title": unicode(track.name),
-            "album": unicode(track.album.name),
-            "artist": ", ".join(unicode(artist.name) for artist in track.artists),
-            "duration": track.duration / 1000,
-            "uri": unicode(track.link.uri),
-            "playlist": unicode(playlist_name),
-            "image": "/tmp/static/" + str(track.link.uri)
-        } for track in tracks]
-    return json.dumps(tracks, indent=2)
-
 
 class Spotify(object):
     def __init__(self, config):
@@ -100,7 +73,7 @@ class Spotify(object):
             pass
 
     @login_required
-    @serialize_output(tracks_to_json)
+    # @serialize_output(tracks_to_json)
     def search(self, query=''):
         d = Deferred()
         self.query = self.session.search(query, callback=lambda x: d.callback(x.tracks),
@@ -108,7 +81,7 @@ class Spotify(object):
         return d
 
     @login_required
-    @serialize_output(tracks_to_json)
+    # @serialize_output(tracks_to_json)
     def more(self):
         assert self.query
         d = Deferred()
@@ -189,7 +162,7 @@ class Spotify(object):
         return self.logged_out_deferred
 
     @login_required
-    @serialize_output(playlists_to_json)
+    # @serialize_output(playlists_to_json)
     def get_playlists(self):
         d = Deferred()
         if self.session.playlist_container.is_loaded:
@@ -201,10 +174,11 @@ class Spotify(object):
         return d
 
     @login_required
-    def get_playlist_tracks(self, index):
+    def get_playlist(self, index):
         assert self.session.playlist_container.is_loaded
         playlist = self.session.playlist_container[index]
-        return tracks_to_json(playlist.tracks, playlist_name=playlist.name)
+        # return tracks_to_json(playlist.tracks, playlist_name=playlist.name)
+        return playlist
 
     def play(self, track):
         self.session.player.load(track)
