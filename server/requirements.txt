@@ -2,3 +2,4 @@ twisted
 pyspotify
 pyalsaaudio
 txrestapi
+zeroconf

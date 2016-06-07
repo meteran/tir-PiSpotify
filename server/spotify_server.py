@@ -8,11 +8,13 @@ from twisted.web.resource import Resource
 from twisted.web.server import Site, NOT_DONE_YET
 from txrestapi.resource import APIResource
 from txrestapi.methods import GET,POST
+from zeroconf import ServiceInfo, Zeroconf
 
 from spotify_player import Spotify
 
 import logging
 import json
+import socket
 
 DEBUG = False
 
@@ -162,29 +164,39 @@ class Player(APIResource):
         self.spotify.pause()
         return json.dumps(self.get_state())
 
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('spotify_server')
-
-cfg = ConfigParser()
-cfg.read("config.ini")
-
-spotify = Spotify(cfg.items("SPOTIFY"))
-try:
-    spotify.relogin()
-    logger.info("Logged in as '%s'", spotify.session.remembered_user_name)
-except:
-    logger.info("Not logged in.")
-
-# root = Resource()
-# root.putChild("playlist", Playlist(spotify))
-# root.putChild("player", Player(spotify))
-
-player = Player(spotify)
-site = Site(player)
-reactor.listenTCP(cfg.getint("SERVER", "port"), site)
-reactor.run()
-
 if __name__ == "__main__":
-    DEBUG = False
-    discover = Discover(cfg)
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger('spotify_server')
+    # logging.getLogger('zeroconf').setLevel(logging.DEBUG)
+    # read config
+    cfg = ConfigParser()
+    cfg.read("config.ini")
+    # setup spotify and API
+    spotify = Spotify(cfg.items("SPOTIFY"))
+    try:
+        spotify.relogin()
+        logger.info("Logged in as '%s'", spotify.session.remembered_user_name)
+    except:
+        logger.info("Not logged in.")
+    player = Player(spotify)
+    site = Site(player)
+    # setup and register service
+    host = socket.gethostbyname(socket.gethostname())
+    port = cfg.getint("SERVER", "port")
+    service_info = ServiceInfo(
+        type='_http._tcp.local.',
+        name='pispotify._http._tcp.local.',
+        address=socket.inet_aton(host), port=port,
+        properties={'version':'0.1'}
+    )
+    zeroconf = Zeroconf()
+    zeroconf.register_service(service_info)
+    logger.info("Listening on %s:%d",host,port)
+    reactor.listenTCP(port, site)
+    try:
+        reactor.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        zeroconf.unregister_service(service_info)
+        zeroconf.close()
