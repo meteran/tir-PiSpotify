@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # coding: utf-8
 import logging
 from ConfigParser import ConfigParser
@@ -33,7 +33,7 @@ if __name__ == "__main__":
             try:
                 self.s.relogin()
             except:
-                self.logger("you are not logged in.")
+                self.logger.error("you are not logged in.")
 
         def do_login(self, line):
             username = line
