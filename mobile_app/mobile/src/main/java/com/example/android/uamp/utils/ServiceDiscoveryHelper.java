@@ -5,6 +5,8 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
 
+import com.example.android.uamp.MusicService;
+
 public class ServiceDiscoveryHelper {
 
 
@@ -12,6 +14,7 @@ public class ServiceDiscoveryHelper {
     public static final String SERVICE_NAME = "pispotify";
     private static final String TAG = LogHelper.makeLogTag(ServiceDiscoveryHelper.class);
     private final NsdManager mNsdManager;
+
 
     private final NsdManager.DiscoveryListener discoveryListener =
             new NsdManager.DiscoveryListener() {
@@ -60,6 +63,7 @@ public class ServiceDiscoveryHelper {
                     mNsdManager.stopServiceDiscovery(this);
                 }
             };
+    private final MusicService musicService;
     private NsdServiceInfo mService;
 
     private final NsdManager.ResolveListener mResolveListener = new NsdManager.ResolveListener() {
@@ -74,11 +78,13 @@ public class ServiceDiscoveryHelper {
             Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
             mService = serviceInfo;
             Log.i(TAG, "resolved " + mService.getHost().getHostName() + ":" + mService.getPort());
+            musicService.getmMusicProvider().retrieveMediaAsync(null);
         }
     };
 
 
-    public ServiceDiscoveryHelper(Context mContext) {
+    public ServiceDiscoveryHelper(Context mContext, MusicService musicService) {
+        this.musicService = musicService;
         mNsdManager = (NsdManager) mContext.getSystemService(Context.NSD_SERVICE);
         mNsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
     }

@@ -27,6 +27,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import com.example.android.uamp.R;
 import com.example.android.uamp.utils.LogHelper;
 import com.example.android.uamp.utils.MediaIDHelper;
+import com.example.android.uamp.utils.ServiceDiscoveryHelper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,8 +68,8 @@ public class MusicProvider {
         void onMusicCatalogReady(boolean success);
     }
 
-    public MusicProvider(String catalogUrl) {
-        this(new PiSpotifySource(catalogUrl));
+    public MusicProvider(ServiceDiscoveryHelper discoveryHelper) {
+        this(new PiSpotifySource(discoveryHelper));
     }
 
     public MusicProvider(MusicProviderSource source) {

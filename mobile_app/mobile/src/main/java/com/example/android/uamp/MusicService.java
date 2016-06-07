@@ -122,6 +122,11 @@ public class MusicService extends MediaBrowserServiceCompat implements
     // Delay stopSelf by using a handler.
     private static final int STOP_DELAY = 30000;
     private final DelayedStopHandler mDelayedStopHandler = new DelayedStopHandler(this);
+
+    public MusicProvider getmMusicProvider() {
+        return mMusicProvider;
+    }
+
     private MusicProvider mMusicProvider;
     private PlaybackManager mPlaybackManager;
     private MediaSessionCompat mSession;
@@ -133,21 +138,14 @@ public class MusicService extends MediaBrowserServiceCompat implements
     private BroadcastReceiver mCarConnectionReceiver;
     private ServiceDiscoveryHelper mDiscoveryHelper;
 
-    /*
-     * (non-Javadoc)
-     * @see android.app.Service#onCreate()
-     */
     @Override
     public void onCreate() {
         super.onCreate();
         LogHelper.d(TAG, "onCreate");
-        mDiscoveryHelper = new ServiceDiscoveryHelper(this);
-        mMusicProvider = new MusicProvider("http://192.168.0.17/music.json"); //todo
+        mDiscoveryHelper = new ServiceDiscoveryHelper(this, this);
+        mMusicProvider = new MusicProvider(mDiscoveryHelper);
 
-        // To make the app more responsive, fetch and cache catalog information now.
-        // This can help improve the response time in the method
-        // {@link #onLoadChildren(String, Result<List<MediaItem>>) onLoadChildren()}.
-        mMusicProvider.retrieveMediaAsync(null /* Callback */);
+        //mMusicProvider.retrieveMediaAsync(null /* Callback */);
 
         mPackageValidator = new PackageValidator(this);
 
@@ -293,14 +291,7 @@ public class MusicService extends MediaBrowserServiceCompat implements
             // if music library is ready, return immediately
             result.sendResult(mMusicProvider.getChildren(parentMediaId, getResources()));
         } else {
-            // otherwise, only return results when the music library is retrieved
             result.detach();
-            mMusicProvider.retrieveMediaAsync(new MusicProvider.Callback() {
-                @Override
-                public void onMusicCatalogReady(boolean success) {
-                    result.sendResult(mMusicProvider.getChildren(parentMediaId, getResources()));
-                }
-            });
         }
     }
 

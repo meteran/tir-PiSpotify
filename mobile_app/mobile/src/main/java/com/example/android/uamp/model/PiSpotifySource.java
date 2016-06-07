@@ -1,8 +1,10 @@
 package com.example.android.uamp.model;
 
 import android.support.v4.media.MediaMetadataCompat;
+import android.util.Log;
 
 import com.example.android.uamp.utils.LogHelper;
+import com.example.android.uamp.utils.ServiceDiscoveryHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -19,8 +21,6 @@ import java.util.Iterator;
 public class PiSpotifySource implements MusicProviderSource {
     private static final String TAG = LogHelper.makeLogTag(PiSpotifySource.class);
 
-    private final String catalogUrl;
-
     private static final String JSON_MUSIC = "music";
     private static final String JSON_TITLE = "title";
     private static final String JSON_ALBUM = "album";
@@ -28,14 +28,17 @@ public class PiSpotifySource implements MusicProviderSource {
     private static final String JSON_IMAGE = "image";
     private static final String JSON_PLAYLIST = "playlist";
     private static final String JSON_DURATION = "duration";
+    private final ServiceDiscoveryHelper discoveryHelper;
 
-    public PiSpotifySource(String catalogUrl) {
-        this.catalogUrl = catalogUrl;
+    public PiSpotifySource(ServiceDiscoveryHelper discoveryHelper) {
+        this.discoveryHelper = discoveryHelper;
     }
 
     @Override
     public Iterator<MediaMetadataCompat> iterator() {
         try {
+            String catalogUrl = "http://" + discoveryHelper.getService().getHost().getHostName() + "/music.json";
+            Log.d(TAG, "iterator " + catalogUrl);
             int slashPos = catalogUrl.lastIndexOf('/');
             String path = catalogUrl.substring(0, slashPos + 1);
             JSONObject jsonObj = fetchJSONFromUrl(catalogUrl);
