@@ -40,14 +40,16 @@ def playlists_to_json(playlists):
     return json.dumps(playlists, indent=2)
 
 
-def tracks_to_json(tracks):
+def tracks_to_json(tracks, playlist_name=""):
     tracks = [
-        {"title": unicode(track.name),
-         "artists": [unicode(artist.name) for artist in track.artists],
-         "time": track.duration / 1000,
-         "album": unicode(track.album.name),
-         "uri": unicode(track.link.uri)
-         } for track in tracks]
+        {
+            "title": unicode(track.name),
+            "album": unicode(track.album.name),
+            "artist": ", ".join(unicode(artist.name) for artist in track.artists),
+            "duration": track.duration / 1000,
+            "uri": unicode(track.link.uri),
+            "playlist": unicode(playlist_name)
+        } for track in tracks]
     return json.dumps(tracks, indent=2)
 
 
@@ -192,7 +194,8 @@ class Spotify(object):
     @login_required
     def get_playlist_tracks(self, index):
         assert self.session.playlist_container.is_loaded
-        return tracks_to_json(self.session.playlist_container[index].tracks)
+        playlist = self.session.playlist_container[index]
+        return tracks_to_json(playlist.tracks, playlist_name=playlist.name)
 
     def play(self, track):
         self.session.player.load(track)
