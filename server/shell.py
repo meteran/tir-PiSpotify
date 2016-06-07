@@ -77,7 +77,7 @@ if __name__ == "__main__":
             self.s.get_playlists().addCallback(self.logger.info)
 
         def do_print(self, index):
-            self.logger.info(self.s.get_playlist_tracks(int(index)))
+            self.logger.info(self.s.get_playlist(int(index)).tracks)
 
         def do_play_playlist(self, index):
             self.s.play_playlist(int(index))
