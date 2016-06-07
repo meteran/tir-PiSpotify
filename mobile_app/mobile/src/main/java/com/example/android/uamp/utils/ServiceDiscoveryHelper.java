@@ -78,7 +78,8 @@ public class ServiceDiscoveryHelper {
             Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
             mService = serviceInfo;
             Log.i(TAG, "resolved " + mService.getHost().getHostName() + ":" + mService.getPort());
-            musicService.getmMusicProvider().retrieveMediaAsync(null);
+            //musicService.getmMusicProvider().retrieveMediaAsync(null);
+            musicService.notifyChildrenChanged("__ROOT__");
         }
     };
 
