@@ -135,7 +135,7 @@ class Spotify(object):
         self.session.player.seek(int(seconds) * 1000)
 
     def connection_state_changed(self, session):
-        if session.connection.state is spotify.ConnectionState.LOGGED_IN and self.logged_in_deferred:
+        if session.connection.state is spotify.ConnectionState.LOGGED_IN:
             self.logged_in = True
         elif session.connection.state is spotify.ConnectionState.LOGGED_OUT:
             self.logged_in = False
