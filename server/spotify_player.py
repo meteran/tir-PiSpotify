@@ -35,18 +35,23 @@ def serialize_output(serialize_func):
 def playlists_to_json(playlists):
     playlists = [
         {"name": playlist.name,
-         "id": index
+         "id": index,
          } for index, playlist in enumerate(playlists)]
     return json.dumps(playlists, indent=2)
 
 
 def tracks_to_json(tracks):
+    for track in tracks:
+        with open("/tmp/static/"+str(track.link.uri), 'w') as f:
+            f.write(track.album.cover().load().data)
+
     tracks = [
         {"title": unicode(track.name),
          "artists": [unicode(artist.name) for artist in track.artists],
          "time": track.duration / 1000,
          "album": unicode(track.album.name),
-         "uri": unicode(track.link.uri)
+         "uri": unicode(track.link.uri),
+         "image": "/tmp/static/"+str(track.link.uri)
          } for track in tracks]
     return json.dumps(tracks, indent=2)
 
@@ -148,7 +153,6 @@ class Spotify(object):
             to_call = self.logged_in_deferred.callback if self.logged_in else self.logged_in_deferred.errback
             reactor.callFromThread(to_call, self.logged_in)
             self.logged_in_deferred = None
-
 
     def next_track(self):
         self.end_of_track()
