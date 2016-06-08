@@ -75,7 +75,7 @@ public class PiSpotifySource implements MusicProviderSource {
 
 
         // Since we don't have a unique ID in the server, we fake one using the hashcode of the metadata
-        String id = String.valueOf(json.toString().hashCode());
+        String id = String.valueOf(json.toString().hashCode()); //todo use server's
 
         // Adding the music source to the MediaMetadata (and consequently using it in the
         // mediaSession.setMetadata) is not a good idea for a real world music app, because
