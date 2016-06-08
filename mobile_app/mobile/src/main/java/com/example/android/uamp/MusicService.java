@@ -175,7 +175,7 @@ public class MusicService extends MediaBrowserServiceCompat implements
                     }
                 });
 
-        SpotifyPlayback playback = new SpotifyPlayback(this, mMusicProvider, mDiscoveryHelper);
+        SpotifyPlayback playback = new SpotifyPlayback(this, mDiscoveryHelper);
         mPlaybackManager = new PlaybackManager(this, getResources(), mMusicProvider, queueManager,
                 playback);
 

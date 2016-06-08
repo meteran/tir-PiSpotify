@@ -18,7 +18,6 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.android.uamp.R;
-import com.example.android.uamp.model.MusicProvider;
 import com.example.android.uamp.utils.LogHelper;
 import com.example.android.uamp.utils.ServiceDiscoveryHelper;
 
@@ -42,7 +41,6 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
 
     private final Context mContext;
     private final WifiManager.WifiLock mWifiLock;
-    private final MusicProvider mMusicProvider;
     private final ServiceDiscoveryHelper mDiscoveryHelper;
     private final RequestQueue requestQueue;
     private final AudioManager mAudioManager;
@@ -56,9 +54,8 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
     private MediaPlayer mMediaPlayer;
 
 
-    public SpotifyPlayback(Context context, MusicProvider musicProvider, ServiceDiscoveryHelper mDiscoveryHelper) {
+    public SpotifyPlayback(Context context, ServiceDiscoveryHelper mDiscoveryHelper) {
         this.mContext = context;
-        this.mMusicProvider = musicProvider;
         requestQueue = Volley.newRequestQueue(context);
         this.mDiscoveryHelper = mDiscoveryHelper;
         this.mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
@@ -143,7 +140,6 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
 
     @Override
     public void play(MediaSessionCompat.QueueItem item) {
-        Log.i(TAG, "play " + item.getDescription().getTitle());
         mPlayOnFocusGain = true;
         tryToGetAudioFocus();
         String mediaId = item.getDescription().getMediaId();
@@ -155,9 +151,9 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
 
         if (mState == PlaybackStateCompat.STATE_PAUSED && !mediaHasChanged && mMediaPlayer != null) {
             configMediaPlayerState();
-            get("/unpause");
+            get("/play");
         } else {
-            get("/play?id=" + mediaId);
+            get("/play?uri=" + mediaId);
             mState = PlaybackStateCompat.STATE_STOPPED;
             relaxResources(false); // release everything except MediaPlayer
 
@@ -196,8 +192,8 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
     }
 
     @Override
-    public void pause() { //todo
-        get("/pause?id=" + mCurrentMediaId + "&pos=" + mMediaPlayer.getCurrentPosition());
+    public void pause() {
+        get("/pause?uri=" + mCurrentMediaId + "&pos=" + mMediaPlayer.getCurrentPosition());
         if (mState == PlaybackStateCompat.STATE_PLAYING) {
             // Pause media player and cancel the 'foreground service' state.
             if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
@@ -215,8 +211,8 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
     }
 
     @Override
-    public void seekTo(int position) { //todo
-        get("/seek?id=" + mCurrentMediaId + "&pos=" + mMediaPlayer.getCurrentPosition());
+    public void seekTo(int position) {
+        get("/seek?uri=" + mCurrentMediaId + "&pos=" + mMediaPlayer.getCurrentPosition());
         if (mMediaPlayer == null) {
             // If we do not have a current media player, simply update the current position
             mCurrentPosition = position;

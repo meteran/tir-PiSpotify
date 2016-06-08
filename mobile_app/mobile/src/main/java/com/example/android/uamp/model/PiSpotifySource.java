@@ -28,6 +28,7 @@ public class PiSpotifySource implements MusicProviderSource {
     private static final String JSON_IMAGE = "image";
     private static final String JSON_PLAYLIST = "playlist";
     private static final String JSON_DURATION = "duration";
+    private static final String JSON_URI = "uri";
     private final ServiceDiscoveryHelper discoveryHelper;
 
     public PiSpotifySource(ServiceDiscoveryHelper discoveryHelper) {
@@ -37,7 +38,7 @@ public class PiSpotifySource implements MusicProviderSource {
     @Override
     public Iterator<MediaMetadataCompat> iterator() {
         try {
-            String catalogUrl = "http://" + discoveryHelper.getService().getHost().getHostName() + "/music.json";
+            String catalogUrl = "http://" + discoveryHelper.getService().getHost().getHostName() + "/playlists/all";
             Log.d(TAG, "iterator " + catalogUrl);
             int slashPos = catalogUrl.lastIndexOf('/');
             String path = catalogUrl.substring(0, slashPos + 1);
@@ -74,8 +75,7 @@ public class PiSpotifySource implements MusicProviderSource {
         }
 
 
-        // Since we don't have a unique ID in the server, we fake one using the hashcode of the metadata
-        String id = String.valueOf(json.toString().hashCode()); //todo use server's
+        String id = json.getString(JSON_URI);
 
         // Adding the music source to the MediaMetadata (and consequently using it in the
         // mediaSession.setMetadata) is not a good idea for a real world music app, because
