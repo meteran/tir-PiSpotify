@@ -22,7 +22,7 @@ def serialize_tracks(tracks, playlist_name=""):
 
 def serialize_track(track, playlist_name=""):
     with open("/tmp/static/"+str(track.link.uri), 'w') as f:
-        f.write(track.album.cover().load().data)
+        f.write(track.album.cover().data)
     return {
         "title": unicode(track.name),
         "album": unicode(track.album.name),

@@ -324,7 +324,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
-        spotify.logout()
+        # spotify.logout()
         # reactor.stop()
         zeroconf.unregister_service(service_info)
         zeroconf.close()
