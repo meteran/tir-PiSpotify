@@ -196,10 +196,6 @@ class Player(APIResource):
             # request.finish()
 
     @GET('^/player/volume')
-    @json_resource
-    def get_current_volume(self, request):
-        return self._get_volume()
-
     @POST('^/player/volume')
     @json_resource
     def set_current_volume(self, request):
@@ -213,7 +209,7 @@ class Player(APIResource):
                 return {'unmuted':True}
         elif 'volume' in request.args:
             self.spotify.set_volume(int(request.args['volume'][0]))
-            return self._get_volume()
+        return self._get_volume()
 
     @GET('^/player/seek')
     @POST('^/player/seek')
