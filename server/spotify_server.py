@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 from ConfigParser import ConfigParser, Error as ConfigParserError
+from getpass import getpass
 
 from twisted.internet import reactor
 from twisted.internet.protocol import DatagramProtocol
@@ -281,19 +282,6 @@ if __name__ == "__main__":
     cfg = ConfigParser()
     cfg.read("config.ini")
     # setup spotify and API
-    spotify = Spotify(cfg.items("SPOTIFY"))
-    try:
-        spotify.relogin()
-        logger.info("Logged in as '%s'", spotify.session.remembered_user_name)
-    except:
-        logger.info("Not logged in.")
-    root = Resource()
-    root.isLeaf = False
-    player = Player(spotify)
-    root.putChild("player",player)
-    root.putChild("static",File(cfg.get("SERVER", "static")))
-    site = Site(root)
-    # setup and register service
     try:
         host = cfg.get("SERVER", "host")
     except ConfigParserError:
@@ -304,16 +292,39 @@ if __name__ == "__main__":
         type='_http._tcp.local.',
         name='pispotify._http._tcp.local.',
         address=socket.inet_aton(host), port=port,
-        properties={'version':'0.1'}
+        properties={'version': '0.1'}
     )
     zeroconf = Zeroconf()
-    zeroconf.register_service(service_info)
-    logger.info("Listening on %s:%d",host,port)
-    reactor.listenTCP(port, site)
+    spotify = Spotify(cfg.items("SPOTIFY"))
+
+    def on_login(_):
+        logger.info("Logged in as '%s'", spotify.session.user_name)
+        root = Resource()
+        root.isLeaf = False
+        player = Player(spotify)
+        root.putChild("player",player)
+        root.putChild("static",File(cfg.get("SERVER", "static")))
+        site = Site(root)
+        # setup and register service
+        reactor.listenTCP(port, site)
+        zeroconf.register_service(service_info)
+        logger.info("Listening on %s:%d", host, port)
+
+    def on_not_logged_in(_):
+        logger.info("Not logged in")
+        spotify.login(raw_input("Username: "), getpass("Password: "), ).addCallbacks(on_login, on_not_logged_in)
+
+    try:
+        spotify.relogin().addCallbacks(on_login, on_not_logged_in)
+    except:
+        on_not_logged_in(None)
+
     try:
         reactor.run()
     except KeyboardInterrupt:
         pass
     finally:
+        spotify.logout()
+        # reactor.stop()
         zeroconf.unregister_service(service_info)
         zeroconf.close()
