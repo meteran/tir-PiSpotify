@@ -222,6 +222,7 @@ class Player(APIResource):
             self.spotify.play_uri(request.args['uri'][0])
         if 'pos' in request.args:
             self.spotify.seek(int(request.args['pos'][0]))
+        return self._get_state()
 
     @GET('^/player/play')
     @POST('^/player/play')
