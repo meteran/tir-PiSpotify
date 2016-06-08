@@ -21,8 +21,8 @@ def serialize_tracks(tracks, playlist_name=""):
     return {'music': [serialize_track(track, playlist_name) for track in tracks]}
 
 def serialize_track(track, playlist_name=""):
-    with open("/tmp/static/"+str(track.link.uri), 'w') as f:
-        f.write(track.album.cover().data)
+    # with open("/tmp/static/"+str(track.link.uri), 'w') as f:
+    #     f.write(track.album.cover().data)
     return {
         "title": unicode(track.name),
         "album": unicode(track.album.name),
@@ -30,5 +30,5 @@ def serialize_track(track, playlist_name=""):
         "duration": track.duration / 1000,
         "uri": unicode(track.link.uri),
         "playlist": unicode(playlist_name),
-        "image": "/tmp/static/" + str(track.link.uri),
+        "image": "/static/cover.jpg",
     }
