@@ -137,12 +137,18 @@ class Spotify(object):
     def connection_state_changed(self, session):
         if session.connection.state is spotify.ConnectionState.LOGGED_IN and self.logged_in_deferred:
             self.logged_in = True
-            reactor.callFromThread(self.logged_in_deferred.callback, self.logged_in)
-            self.logged_in_deferred = None
-        elif session.connection.state is spotify.ConnectionState.LOGGED_OUT and self.logged_out_deferred:
+        elif session.connection.state is spotify.ConnectionState.LOGGED_OUT:
             self.logged_in = False
-            reactor.callFromThread(self.logged_out_deferred.callback, self.logged_in)
+
+        if self.logged_out_deferred:
+            to_call = self.logged_out_deferred.callback if not self.logged_in else self.logged_out_deferred.errback
+            reactor.callFromThread(to_call, self.logged_in)
             self.logged_out_deferred = None
+        if self.logged_in_deferred:
+            to_call = self.logged_in_deferred.callback if self.logged_in else self.logged_in_deferred.errback
+            reactor.callFromThread(to_call, self.logged_in)
+            self.logged_in_deferred = None
+
 
     def next_track(self):
         self.end_of_track()
