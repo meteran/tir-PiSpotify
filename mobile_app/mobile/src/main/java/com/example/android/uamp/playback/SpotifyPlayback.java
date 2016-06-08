@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.WifiManager;
 import android.os.PowerManager;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -19,6 +20,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.android.uamp.R;
 import com.example.android.uamp.utils.LogHelper;
+import com.example.android.uamp.utils.MediaIDHelper;
 import com.example.android.uamp.utils.ServiceDiscoveryHelper;
 
 import java.io.IOException;
@@ -123,8 +125,10 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
 
     private void get(String url) {
         Log.i(TAG, url);
+        NsdServiceInfo service = mDiscoveryHelper.getService();
         requestQueue.add(
-                new StringRequest(Request.Method.GET, "http://" + mDiscoveryHelper.getService().getHost().getHostAddress() + url, new Response.Listener<String>() {
+                new StringRequest(Request.Method.GET, "http://" + service.getHost().getHostAddress()
+                        + ":" + service.getPort() + "/player" + url, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.i(TAG, "server response:\n" + response);
@@ -153,7 +157,7 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
             configMediaPlayerState();
             get("/play");
         } else {
-            get("/play?uri=" + mediaId);
+            get("/play?uri=" + MediaIDHelper.extractMusicIDFromMediaID(mediaId));
             mState = PlaybackStateCompat.STATE_STOPPED;
             relaxResources(false); // release everything except MediaPlayer
 
@@ -193,7 +197,7 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
 
     @Override
     public void pause() {
-        get("/pause?uri=" + mCurrentMediaId + "&pos=" + mMediaPlayer.getCurrentPosition());
+        get("/pause?uri=" + MediaIDHelper.extractMusicIDFromMediaID(mCurrentMediaId) + "&pos=" + mMediaPlayer.getCurrentPosition());
         if (mState == PlaybackStateCompat.STATE_PLAYING) {
             // Pause media player and cancel the 'foreground service' state.
             if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
@@ -212,7 +216,7 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
 
     @Override
     public void seekTo(int position) {
-        get("/seek?uri=" + mCurrentMediaId + "&pos=" + mMediaPlayer.getCurrentPosition());
+        get("/seek?uri=" + MediaIDHelper.extractMusicIDFromMediaID(mCurrentMediaId) + "&pos=" + mMediaPlayer.getCurrentPosition());
         if (mMediaPlayer == null) {
             // If we do not have a current media player, simply update the current position
             mCurrentPosition = position;
@@ -416,7 +420,13 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
     private void createMediaPlayerIfNeeded() {
         LogHelper.d(TAG, "createMediaPlayerIfNeeded. needed? ", (mMediaPlayer == null));
         if (mMediaPlayer == null) {
-            mMediaPlayer = new MediaPlayer();
+            mMediaPlayer = new MediaPlayer() {
+                @Override
+                public void setVolume(float leftVolume, float rightVolume) {
+                    super.setVolume(leftVolume, rightVolume);
+                    Log.i(TAG, "volume l=" + leftVolume + " r=" + rightVolume);
+                }
+            };
 
             // Make sure the media player will acquire a wake-lock while
             // playing. If we don't do that, the CPU might go to sleep while the

@@ -1,5 +1,6 @@
 package com.example.android.uamp.model;
 
+import android.net.nsd.NsdServiceInfo;
 import android.support.v4.media.MediaMetadataCompat;
 import android.util.Log;
 
@@ -38,7 +39,10 @@ public class PiSpotifySource implements MusicProviderSource {
     @Override
     public Iterator<MediaMetadataCompat> iterator() {
         try {
-            String catalogUrl = "http://" + discoveryHelper.getService().getHost().getHostName() + "/playlists/all";
+            NsdServiceInfo service = discoveryHelper.getService();
+            String url = "http://" + service.getHost().getHostAddress()
+                    + ":" + service.getPort() + "/";
+            String catalogUrl = url + "player/playlists/all";
             Log.d(TAG, "iterator " + catalogUrl);
             int slashPos = catalogUrl.lastIndexOf('/');
             String path = catalogUrl.substring(0, slashPos + 1);
@@ -49,7 +53,7 @@ public class PiSpotifySource implements MusicProviderSource {
 
                 if (jsonTracks != null) {
                     for (int j = 0; j < jsonTracks.length(); j++) {
-                        tracks.add(buildFromJSON(jsonTracks.getJSONObject(j), path));
+                        tracks.add(buildFromJSON(jsonTracks.getJSONObject(j), url));
                     }
                 }
             }
