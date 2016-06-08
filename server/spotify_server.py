@@ -218,8 +218,10 @@ class Player(APIResource):
     @GET('^/player/seek')
     @POST('^/player/seek')
     def seek(self, request):
+        if 'uri' in request.args:
+            self.spotify.play_uri(request.args['uri'][0])
         if 'pos' in request.args:
-            self.spotify.seek(int(request.args['pos']))
+            self.spotify.seek(int(request.args['pos'][0]))
 
     @GET('^/player/play')
     @POST('^/player/play')
