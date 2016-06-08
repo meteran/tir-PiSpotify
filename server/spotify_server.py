@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # coding: utf-8
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, Error as ConfigParserError
 
 from twisted.internet import reactor
 from twisted.internet.protocol import DatagramProtocol
@@ -96,6 +96,7 @@ class Player(APIResource):
         return response
 
     @GET('^/playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)/play')
+    @POST('^/playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)/play')
     @json_resource
     def play_track(self, request, pl_id, track_id):
         try:
@@ -111,11 +112,21 @@ class Player(APIResource):
     @GET('^/playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)')
     @json_resource
     def show_track(self, request, pl_id, track_id):
-        request.setHeader("Content-Type", "application/json")
         try:
             playlist = self.spotify.get_playlist(int(pl_id))
             track = playlist.tracks[int(track_id)]
             return serialize_track(track, playlist_name=playlist.name)
+        except IndexError:
+            request.setResponseCode(404)
+            return {'error':'not found'}
+
+    @GET('^/playlists/(?P<index>[^/]+)/play')
+    @POST('^/playlists/(?P<index>[^/]+)/play')
+    @json_resource
+    def play_playlist(self, request, index):
+        try:
+            random = 'random' in request.args
+            self.spotify.play_playlist(int(index), randomize=random)
         except IndexError:
             request.setResponseCode(404)
 
@@ -139,6 +150,34 @@ class Player(APIResource):
             request.finish()
         self.spotify.get_playlists().addCallback(callback)
         return NOT_DONE_YET
+
+    @GET('^/search/more')
+    def search_fetch_more(self, request):
+        if not self.spotify.query:
+            request.setResponseCode(400)
+            write_json(request, {'error': 'no query submitted to /search'})
+            return ""
+        def callback(tracks):
+            write_json(request, serialize_tracks(tracks))
+            request.finish()
+        self.spotify.more().addCallback(callback)
+        return NOT_DONE_YET
+
+    @GET('^/search')
+    @POST('^/search')
+    def search(self, request):
+        if 'q' in request.args:
+            query = request.args['q'][0]
+            def callback(tracks):
+                write_json(request, serialize_tracks(tracks))
+                request.finish()
+            self.spotify.search(query).addCallback(callback)
+            return NOT_DONE_YET
+        else:
+            request.setResponseCode(400)
+            write_json(request, {'error':"missing query parameter 'q'"})
+            return ""
+            # request.finish()
 
     @GET('^/volume')
     @json_resource
@@ -230,7 +269,11 @@ if __name__ == "__main__":
     player = Player(spotify)
     site = Site(player)
     # setup and register service
-    host = socket.gethostbyname(socket.gethostname())
+    try:
+        host = cfg.get("SERVER", "host")
+    except ConfigParserError:
+        host = socket.gethostbyname(socket.gethostname())
+        logger.warn("option host missing from [SERVER]. defaulting to %r", host)
     port = cfg.getint("SERVER", "port")
     service_info = ServiceInfo(
         type='_http._tcp.local.',
