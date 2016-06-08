@@ -109,9 +109,9 @@ class Spotify(object):
         self.session.player.unload()
 
     @login_required
-    def seek(self, seconds):
+    def seek(self, miliseconds):
         assert self.session.player.state is not spotify.PlayerState.UNLOADED
-        self.session.player.seek(int(seconds) * 1000)
+        self.session.player.seek(int(miliseconds))
 
     def connection_state_changed(self, session):
         if session.connection.state is spotify.ConnectionState.LOGGED_IN:
