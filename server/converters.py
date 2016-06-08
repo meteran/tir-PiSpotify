@@ -30,5 +30,5 @@ def serialize_track(track, playlist_name=""):
         "duration": track.duration / 1000,
         "uri": unicode(track.link.uri),
         "playlist": unicode(playlist_name),
-        "image": "/static/cover.jpg",
+        "image": "static/cover.jpg",
     }
