@@ -6,6 +6,7 @@ from twisted.internet import reactor
 from twisted.internet.protocol import DatagramProtocol
 from twisted.web.resource import Resource
 from twisted.web.server import Site, NOT_DONE_YET
+from twisted.web.static import File
 from txrestapi.resource import APIResource
 from txrestapi.methods import GET,POST
 from zeroconf import ServiceInfo, Zeroconf
@@ -95,8 +96,8 @@ class Player(APIResource):
             response['username'] = self.spotify.session.remembered_user_name
         return response
 
-    @GET('^/playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)/play')
-    @POST('^/playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)/play')
+    @GET('playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)/play')
+    @POST('playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)/play')
     @json_resource
     def play_track(self, request, pl_id, track_id):
         try:
@@ -109,7 +110,7 @@ class Player(APIResource):
         except IndexError:
             request.setResponseCode(404)
 
-    @GET('^/playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)')
+    @GET('playlists/(?P<pl_id>[^/]+)/tracks/(?P<track_id>[^/]+)')
     @json_resource
     def show_track(self, request, pl_id, track_id):
         try:
@@ -120,8 +121,8 @@ class Player(APIResource):
             request.setResponseCode(404)
             return {'error':'not found'}
 
-    @GET('^/playlists/(?P<index>[^/]+)/play')
-    @POST('^/playlists/(?P<index>[^/]+)/play')
+    @GET('playlists/(?P<index>[^/]+)/play')
+    @POST('playlists/(?P<index>[^/]+)/play')
     @json_resource
     def play_playlist(self, request, index):
         try:
@@ -130,8 +131,22 @@ class Player(APIResource):
         except IndexError:
             request.setResponseCode(404)
 
-    @GET('^/playlists/(?P<index>[^/]+)')
-    @GET('^/playlists/(?P<index>[^/]+)/tracks')
+    @GET('playlists/all')
+    def get_all_playlists(self, request):
+        "List all playlists"
+        def callback(playlists):
+            all_tracks = [
+                serialize_track(track, playlist_name=playlist.name)
+                for playlist in playlists
+                for track in playlist.tracks
+            ]
+            write_json(request, {'music':all_tracks})
+            request.finish()
+        self.spotify.get_playlists().addCallback(callback)
+        return NOT_DONE_YET
+
+    @GET('playlists/(?P<index>\d+)')
+    @GET('playlists/(?P<index>\d+)/tracks')
     @json_resource
     def get_playlist(self, request, index):
         "Get nth playlist"
@@ -142,8 +157,8 @@ class Player(APIResource):
             request.setResponseCode(404)
             return {'error': 'no playlist with this index', 'index': index}
 
-    @GET('^/playlists')
-    def get_all_playlists(self, request):
+    @GET('playlists')
+    def get_playlists(self, request):
         "List all playlists"
         def callback(playlists):
             write_json(request, serialize_playlists(playlists))
@@ -151,7 +166,7 @@ class Player(APIResource):
         self.spotify.get_playlists().addCallback(callback)
         return NOT_DONE_YET
 
-    @GET('^/search/more')
+    @GET('search/more')
     def search_fetch_more(self, request):
         if not self.spotify.query:
             request.setResponseCode(400)
@@ -163,8 +178,8 @@ class Player(APIResource):
         self.spotify.more().addCallback(callback)
         return NOT_DONE_YET
 
-    @GET('^/search')
-    @POST('^/search')
+    @GET('search')
+    @POST('search')
     def search(self, request):
         if 'q' in request.args:
             query = request.args['q'][0]
@@ -179,12 +194,12 @@ class Player(APIResource):
             return ""
             # request.finish()
 
-    @GET('^/volume')
+    @GET('volume')
     @json_resource
     def get_current_volume(self, request):
         return self._get_volume()
 
-    @POST('^/volume')
+    @POST('volume')
     @json_resource
     def set_current_volume(self, request):
         if 'mute' in request.args:
@@ -199,8 +214,14 @@ class Player(APIResource):
             self.spotify.set_volume(int(request.args['volume'][0]))
             return self._get_volume()
 
-    @GET('^/play')
-    @POST('^/play')
+    @GET('seek')
+    @POST('seek')
+    def seek(self, request):
+        if 'pos' in request.args:
+            self.spotify.seek(int(request.args['pos']))
+
+    @GET('play')
+    @POST('play')
     @json_resource
     def play(self, request):
         if 'uri' in request.args:
@@ -209,20 +230,20 @@ class Player(APIResource):
             self.spotify.resume()
         return self._get_state()
 
-    @GET('^/pause')
-    @POST('^/pause')
+    @GET('pause')
+    @POST('pause')
     @json_resource
     def pause(self, request):
         self.spotify.pause()
         return self._get_state()
 
-    @GET('^/login')
+    @GET('login')
     @json_resource
     def get_login(self, request):
         "Check if and, which user is logged in"
         return self._get_login()
 
-    @POST('^/login')
+    @POST('login')
     def login_as(self, request):
         "Login as username:password"
         username = request.args['username'][0]
@@ -234,8 +255,8 @@ class Player(APIResource):
         self.spotify.login(username,password).addCallback(delayedResponse)
         return NOT_DONE_YET
 
-    @GET('^/logout')
-    @POST('^/logout')
+    @GET('logout')
+    @POST('logout')
     def logout(self, request):
         def delayed(logged_in):
             write_json(request,{'logged_out':not logged_in})
@@ -243,8 +264,8 @@ class Player(APIResource):
         self.spotify.logout().addCallback(delayed)
         return NOT_DONE_YET
 
-    @GET('^/status')
-    @GET('^/')
+    @GET('status')
+    @GET('')
     @json_resource
     def get_status(self, request):
         response = self._get_state()
@@ -266,8 +287,12 @@ if __name__ == "__main__":
         logger.info("Logged in as '%s'", spotify.session.remembered_user_name)
     except:
         logger.info("Not logged in.")
+    root = Resource()
+    root.isLeaf = False
     player = Player(spotify)
-    site = Site(player)
+    root.putChild("player",player)
+    root.putChild("static",File(cfg.get("SERVER", "static")))
+    site = Site(root)
     # setup and register service
     try:
         host = cfg.get("SERVER", "host")

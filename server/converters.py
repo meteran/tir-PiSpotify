@@ -27,5 +27,6 @@ def serialize_track(track, playlist_name=""):
         "artist": ", ".join(unicode(artist.name) for artist in track.artists),
         "duration": track.duration / 1000,
         "uri": unicode(track.link.uri),
-        "playlist": unicode(playlist_name)
+        "playlist": unicode(playlist_name),
+        "image": "/static/cover.jpg"
     }
