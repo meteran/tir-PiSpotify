@@ -2,10 +2,12 @@ package com.example.android.uamp.playback;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.database.ContentObserver;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
@@ -56,9 +58,32 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
     private MediaPlayer mMediaPlayer;
 
 
+    public class SettingsContentObserver extends ContentObserver {
+        private AudioManager audioManager;
+
+        public SettingsContentObserver(Context context, Handler handler) {
+            super(handler);
+            audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        }
+
+        @Override
+        public boolean deliverSelfNotifications() {
+            return false;
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            get("/volume?volume=" + currentVolume * 10);
+            //Log.d(TAG, "Volume now " + currentVolume);
+        }
+    }
+
     public SpotifyPlayback(Context context, ServiceDiscoveryHelper mDiscoveryHelper) {
         this.mContext = context;
         requestQueue = Volley.newRequestQueue(context);
+        context.getContentResolver().registerContentObserver(android.provider.Settings.System.CONTENT_URI, true,
+                new SettingsContentObserver(context, new Handler()));
         this.mDiscoveryHelper = mDiscoveryHelper;
         this.mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         // Create the Wifi lock (this does not acquire the lock, this just creates it)
@@ -420,13 +445,7 @@ public class SpotifyPlayback implements Playback, AudioManager.OnAudioFocusChang
     private void createMediaPlayerIfNeeded() {
         LogHelper.d(TAG, "createMediaPlayerIfNeeded. needed? ", (mMediaPlayer == null));
         if (mMediaPlayer == null) {
-            mMediaPlayer = new MediaPlayer() {
-                @Override
-                public void setVolume(float leftVolume, float rightVolume) {
-                    super.setVolume(leftVolume, rightVolume);
-                    Log.i(TAG, "volume l=" + leftVolume + " r=" + rightVolume);
-                }
-            };
+            mMediaPlayer = new MediaPlayer();
 
             // Make sure the media player will acquire a wake-lock while
             // playing. If we don't do that, the CPU might go to sleep while the
